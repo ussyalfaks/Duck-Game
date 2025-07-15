@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Honeycomb Duck Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-bg': '#1a1a2e',
+              'brand-surface': '#16213e',
+              'brand-primary': '#0f3460',
+              'brand-secondary': '#e94560',
+              'brand-text': '#dcdcdc',
+              'brand-text-muted': '#a0a0a0',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['Roboto Mono', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "@solana/wallet-adapter-base": "https://esm.sh/@solana/wallet-adapter-base@^0.9.27",
+    "@solana/wallet-adapter-react-ui": "https://esm.sh/@solana/wallet-adapter-react-ui@^0.9.39",
+    "@solana/wallet-adapter-react": "https://esm.sh/@solana/wallet-adapter-react@^0.15.39",
+    "@solana/wallet-adapter-wallets": "https://esm.sh/@solana/wallet-adapter-wallets@^0.19.37",
+    "@solana/web3.js": "https://esm.sh/@solana/web3.js@^1.98.2",
+    "@honeycomb-protocol/edge-client/": "https://esm.sh/@honeycomb-protocol/edge-client@^0.0.7-beta.15/",
+    "@honeycomb-protocol/edge-client": "https://esm.sh/@honeycomb-protocol/edge-client@^0.0.7-beta.15",
+    "matter-js": "https://esm.sh/matter-js@^0.20.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-bg text-brand-text">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

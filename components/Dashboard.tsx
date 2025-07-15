@@ -1,0 +1,123 @@
+
+import React from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { HCB_Project, HCB_Profile } from '../types';
+import { KEY_BADGE_INDEX } from '../constants';
+import { Loader } from './ui/Loader';
+
+interface DashboardProps {
+  isLoading: boolean;
+  error: string | null;
+  txSignature: string | null;
+  isAdminView: boolean;
+  message: string;
+  project?: HCB_Project | null;
+  profile?: HCB_Profile | null;
+  onAdminAction?: () => void;
+  adminActionText?: string;
+  onPlayerAction?: () => void;
+  playerActionText?: string;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({
+  isLoading,
+  error,
+  txSignature,
+  isAdminView,
+  message,
+  project,
+  profile,
+  onAdminAction,
+  adminActionText,
+  onPlayerAction,
+  playerActionText,
+}) => {
+    const { publicKey } = useWallet();
+    const isAdmin = project && publicKey && project.authority === publicKey.toBase58();
+
+  const renderStatus = () => (
+    <div className="min-h-[100px] mt-4">
+      {isLoading && <div className="flex items-center gap-2"><Loader /><p>Processing transaction...</p></div>}
+      {error && <p className="text-red-400 text-sm break-words">Error: {error}</p>}
+      {txSignature && (
+        <div className="text-green-400 text-sm break-all">
+          <p>Success! Tx:</p>
+          <a
+            href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-green-300"
+          >
+            {txSignature}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderPlayerStats = () => (
+    profile && (
+    <div>
+        <div className="flex items-center gap-4 mb-4">
+            <img src={profile.pfp} alt="Player PFP" className="w-16 h-16 rounded-full bg-brand-primary" />
+            <div>
+                <h3 className="text-xl font-bold">{profile.name}</h3>
+                <p className="text-sm text-brand-text-muted font-mono break-all">{profile.address}</p>
+            </div>
+        </div>
+        <div className="space-y-2">
+            <p><strong>XP:</strong> {profile.xp}</p>
+            <div>
+                <strong>Badges:</strong>
+                {profile.badges.includes(KEY_BADGE_INDEX) ? (
+                    <span className="ml-2 inline-block bg-yellow-500 text-gray-900 px-2 py-1 text-xs font-bold rounded">Level 1 Key</span>
+                ) : (
+                    <span className="ml-2 text-brand-text-muted">None</span>
+                )}
+            </div>
+        </div>
+    </div>
+    )
+  );
+
+  return (
+    <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
+      <div>
+        <div className="flex justify-between items-start mb-4">
+            <h2 className="text-2xl font-bold text-brand-secondary">Dashboard</h2>
+            <WalletMultiButton style={{ backgroundColor: '#0f3460', height: '40px' }} />
+        </div>
+        <p className="text-brand-text-muted mb-6">{message}</p>
+        
+        {onPlayerAction && (
+             <button
+                onClick={onPlayerAction}
+                disabled={isLoading}
+                className="w-full bg-brand-secondary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors"
+            >
+                {playerActionText}
+            </button>
+        )}
+
+        {profile && renderPlayerStats()}
+      </div>
+
+      <div>
+        {isAdmin && onAdminAction && (
+             <div className="mt-6 pt-6 border-t border-brand-primary">
+                <h3 className="font-bold text-lg mb-2">Admin Controls</h3>
+                <button
+                    onClick={onAdminAction}
+                    disabled={isLoading}
+                    className="w-full bg-brand-primary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors"
+                >
+                    {adminActionText}
+                </button>
+            </div>
+        )}
+        {renderStatus()}
+      </div>
+    </div>
+  );
+};

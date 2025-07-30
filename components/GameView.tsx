@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -40,8 +39,44 @@ export const GameView: React.FC = () => {
       window.location.reload();
   }
 
+  // Debug logging
+  console.log('GameView Debug:', {
+    connected,
+    hasProject: !!project,
+    hasProfile: !!profile,
+    isLoading,
+    profileData: profile
+  });
+
   const renderContent = () => {
+    // FIRST PRIORITY: If we have a profile, show the game immediately
+    if (profile) {
+      console.log('Showing game because profile exists:', profile);
+      return (
+        <div className="flex flex-col lg:flex-row gap-8 w-full">
+          <Game
+            onKeyCollect={handleKeyCollect}
+            isKeyCollected={hasKey || hasOnChainKey}
+            onPlayerDeath={resetGame}
+          />
+          <Dashboard
+              isLoading={isLoading}
+              error={error}
+              txSignature={txSignature}
+              isAdminView={true}
+              project={project}
+              profile={profile}
+              onAdminAction={createBadge}
+              adminActionText="Create 'Level 1 Key' Badge"
+              message="Welcome, Player! Use WASD or Arrow Keys to move and jump. Collect the key to unlock the door!"
+          />
+        </div>
+      );
+    }
+
+    // If wallet not connected
     if (!connected) {
+      console.log('Showing wallet connection screen');
       return (
         <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Welcome to the Duck Game!</h2>
@@ -51,52 +86,45 @@ export const GameView: React.FC = () => {
       );
     }
 
-    if (!project) {
-        return (
-            <Dashboard 
-                isLoading={isLoading} 
-                error={error}
-                txSignature={txSignature}
-                isAdminView={true}
-                onAdminAction={createProject}
-                adminActionText="Create Game Project"
-                message="No game project found. As the admin, create one to start."
-            />
-        );
+    // If connected but currently loading (creating profile)
+    if (connected && isLoading) {
+      console.log('Showing loading screen');
+      return (
+        <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
+          <div className="animate-spin h-8 w-8 border-4 border-brand-secondary border-t-transparent rounded-full mb-4"></div>
+          <p className="text-brand-text-muted">Processing... Please wait</p>
+          {error && <p className="text-red-400 text-sm mt-2">Error: {error}</p>}
+        </div>
+      );
     }
 
-    if (!profile) {
-        return (
-            <Dashboard 
-                isLoading={isLoading} 
-                error={error}
-                txSignature={txSignature}
-                isAdminView={false}
-                onPlayerAction={createProfile}
-                playerActionText="Create Player Profile"
-                message="Create your on-chain player profile to enter the game."
-            />
-        );
-    }
-
-    return (
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
-        <Game
-          onKeyCollect={handleKeyCollect}
-          isKeyCollected={hasKey || hasOnChainKey}
-          onPlayerDeath={resetGame}
-        />
-        <Dashboard
-            isLoading={isLoading}
+    // If connected, not loading, but no profile - show profile creation
+    if (connected && !profile) {
+      console.log('Showing profile creation screen');
+      return (
+        <Dashboard 
+            isLoading={isLoading} 
             error={error}
             txSignature={txSignature}
-            isAdminView={true}
-            project={project}
-            profile={profile}
-            onAdminAction={createBadge}
-            adminActionText="Create 'Level 1 Key' Badge"
-            message="Welcome, Player! Your on-chain stats are below."
+            isAdminView={false}
+            onPlayerAction={createProfile}
+            playerActionText="Create Player Profile"
+            message="Create your on-chain player profile to enter the game."
         />
+      );
+    }
+
+    // Fallback - shouldn't reach here
+    console.log('Fallback screen');
+    return (
+      <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
+        <p className="text-brand-text-muted">Something went wrong. Please refresh the page.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 bg-brand-secondary text-white px-4 py-2 rounded hover:bg-opacity-90"
+        >
+          Refresh Page
+        </button>
       </div>
     );
   };

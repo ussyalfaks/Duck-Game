@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { honeycombClient, signAndSendTransaction } from '../services/honeycomb';
@@ -67,8 +66,6 @@ export const useHoneycomb = () => {
       setTxSignature(null);
   }
 
-  // Remove useEffect that loads from localStorage
-
   // Fetch user profile when project and wallet are available
   useEffect(() => {
     const fetchProfile = async () => {
@@ -127,8 +124,6 @@ export const useHoneycomb = () => {
           id: 0, // placeholder
           driver: '' // placeholder
       };
-      // setProject(newProject); // This line is removed as project is now a constant
-      // localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(newProject)); // This line is removed
 
     } catch (e) {
       setError('Failed to create project.');
@@ -177,6 +172,12 @@ export const useHoneycomb = () => {
     setIsLoading(true);
     clearState();
     try {
+      console.log('Creating profile with:', {
+        project: project.address,
+        wallet: wallet.publicKey.toBase58(),
+        payer: wallet.publicKey.toBase58(),
+      });
+
       const { createNewUserWithProfileTransaction: txResponse } = 
         await honeycombClient.createNewUserWithProfileTransaction({
           project: project.address,
@@ -190,13 +191,45 @@ export const useHoneycomb = () => {
           },
       });
 
+      console.log('Transaction response received:', txResponse);
+
       const sigs = await signAndSendTransaction(wallet, txResponse);
-      setTxSignature(sigs?.[0]?.responses?.[0]?.signature || null);
-      // Refetch profile after creation
-      await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+      console.log('Transaction signatures:', sigs);
+      console.log('Full signature structure:', JSON.stringify(sigs, null, 2));
+      
+      // Try multiple ways to extract the signature
+      let signature = null;
+      if (sigs && sigs.length > 0) {
+        const firstSig = sigs[0];
+        console.log('First signature object:', firstSig);
+        
+        // Try different paths to find the signature
+        signature = firstSig?.responses?.[0]?.signature || 
+                   firstSig?.signature || 
+                   (firstSig?.responses && firstSig.responses.find(r => r.signature)?.signature) ||
+                   null;
+      }
+      
+      console.log('Extracted signature:', signature);
+      setTxSignature(signature);
+      
+      if (signature) {
+        console.log('Profile creation transaction successful:', signature);
+        // Wait a bit for blockchain confirmation before refetching
+        setTimeout(async () => {
+          await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+        }, 2000);
+      } else {
+        console.warn('No signature found, but transaction may have succeeded. Attempting to refetch profile anyway...');
+        // Even without signature, try to refetch profile in case transaction succeeded
+        setTimeout(async () => {
+          await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+        }, 2000);
+      }
+      
     } catch (e) {
-      setError('Failed to create profile.');
-      console.error(e);
+      console.error('Profile creation error:', e);
+      setError(`Failed to create profile: ${e instanceof Error ? e.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -222,9 +255,15 @@ export const useHoneycomb = () => {
             });
         
         const sigs = await signAndSendTransaction(wallet, txResponse);
-        setTxSignature(sigs?.[0]?.responses?.[0]?.signature || null);
-        // Refetch profile after claiming badge
-        await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+        const signature = sigs?.[0]?.responses?.[0]?.signature || null;
+        setTxSignature(signature);
+        
+        if (signature) {
+          // Wait a bit for blockchain confirmation before refetching
+          setTimeout(async () => {
+            await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+          }, 2000);
+        }
     } catch (e) {
         setError('Failed to claim key badge.');
         console.error(e);

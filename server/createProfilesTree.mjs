@@ -1,4 +1,4 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, Connection, Transaction, PublicKey } from "@solana/web3.js";
 import { readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -36,23 +36,52 @@ async function main() {
     const txResponse = response.createCreateProfilesTreeTransaction;
     const treeAddress = txResponse.treeAddress;
 
-    console.log("Sending transaction using Honeycomb helper...");
-    const signature = await sendClientTransactions(client, keyPair, txResponse);
+    console.log("Sending transaction manually...");
+    console.log("Tree address:", treeAddress);
+    
+    // Manual transaction handling since the helper is having issues
+    const connection = new Connection("https://rpc.test.honeycombprotocol.com", "confirmed");
+    
+    try {
+      // Try to send as raw transaction data
+      const transactionBuffer = Buffer.from(txResponse.tx.transaction, "base64");
+      
+      console.log("Sending raw transaction...");
+      const signature = await connection.sendRawTransaction(transactionBuffer, {
+        skipPreflight: false,
+        preflightCommitment: "confirmed"
+      });
+      
+      console.log("Confirming transaction...");
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash: txResponse.tx.blockhash,
+        lastValidBlockHeight: txResponse.tx.lastValidBlockHeight
+      });
+      
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      
+      console.log("✅ Profiles tree created successfully!");
+      console.log("🔗 Transaction signature:", signature);
+      console.log("🌳 Tree address:", treeAddress);
 
-    console.log("✅ Profiles tree created successfully!");
-    console.log("🔗 Transaction signature:", signature);
-    console.log("🌳 Tree address:", treeAddress);
+      // Store tree address locally
+      const treeData = {
+        treeAddress,
+        txSignature: signature,
+        createdAt: new Date().toISOString()
+      };
+      writeFileSync(OUTPUT_PATH, JSON.stringify(treeData, null, 2));
 
-    // Store tree address locally
-    const treeData = {
-      treeAddress,
-      txSignature: signature,
-      createdAt: new Date().toISOString()
-    };
-    writeFileSync(OUTPUT_PATH, JSON.stringify(treeData, null, 2));
-
-    console.log(`📁 Tree address saved to ${OUTPUT_PATH}`);
-    return signature;
+      console.log(`📁 Tree address saved to ${OUTPUT_PATH}`);
+      return signature;
+      
+    } catch (rawError) {
+      console.error("Raw transaction failed:", rawError.message);
+      throw rawError;
+    }
   } catch (error) {
     console.error("❌ Failed to create profiles tree:", error.message);
     if (error.stack) {

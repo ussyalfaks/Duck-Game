@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createEdgeClient } from "@honeycomb-protocol/edge-client";
-import { sendTransactions } from "@honeycomb-protocol/edge-client/client/helpers";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,13 +17,13 @@ async function main() {
       fs.readFileSync(path.join(__dirname, "keys/admin.json"), "utf8")
     );
     const keyPair = web3.Keypair.fromSecretKey(new Uint8Array(walletFile));
-    
+
     console.log("Creating Edge client...");
     const client = createEdgeClient(API_URL, true);
-    
+
     console.log("Creating profiles tree transaction...");
     const {
-      createCreateProfilesTreeTransaction: { tx: txResponse },
+      createCreateProfilesTreeTransaction: { tx: txResponse, treeAddress }
     } = await client.createCreateProfilesTreeTransaction({
       project: PROJECT_ADDRESS,
       payer: keyPair.publicKey.toString(),
@@ -35,24 +34,27 @@ async function main() {
       }
     });
 
-    console.log("Sending transaction...");
-    const responses = await sendTransactions(
-      client,
-      {
-        transactions: [txResponse.transaction],
-        blockhash: txResponse.blockhash,
-        lastValidBlockHeight: txResponse.lastValidBlockHeight,
-      },
-      [keyPair]
-    );
+    console.log("Reconstructing transaction...");
+    const transaction = web3.Transaction.from(Buffer.from(txResponse.transaction, "base64"));
+    transaction.recentBlockhash = txResponse.blockhash;
+    transaction.feePayer = keyPair.publicKey;
 
-    console.log("Profiles tree created successfully!");
-    const signature = responses[0]?.responses?.[0]?.signature || "No signature found";
+    console.log("Signing transaction...");
+    transaction.partialSign(keyPair);
+
+    const connection = new web3.Connection("https://api.devnet.solana.com", "confirmed");
+
+    console.log("Sending transaction...");
+    const signature = await web3.sendAndConfirmTransaction(connection, transaction, [keyPair]);
+
+    console.log("✅ Profiles tree created successfully!");
     console.log("Transaction signature:", signature);
-    
+    console.log("Tree address:", treeAddress.toString());
+
     return signature;
   } catch (error) {
-    console.error("Failed to create profiles tree:", error);
+    console.error("❌ Failed to create profiles tree:", error.message);
+    console.error(error);
     process.exit(1);
   }
 }

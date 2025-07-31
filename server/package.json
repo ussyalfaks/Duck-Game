@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "create-project": "node createProject.ts",
-    "create-profiles": "node createProfilesTree.mjs"
+    "create-profiles": "node createProfilesTree.mjs",
+    "create-profiles-cjs": "node createProfilesTree.cjs"
+
   },
   "dependencies": {
     "@honeycomb-protocol/edge-client": "^0.0.7-beta.15",

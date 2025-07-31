@@ -1,16 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { honeycombClient, signAndSendTransaction } from '../services/honeycomb';
+import { authenticateUser, AuthResult } from '../services/auth';
 import { HCB_Project, HCB_Profile, BadgesCondition } from '../types';
 import { KEY_BADGE_INDEX } from '../constants';
-import { PublicKey } from '@solana/web3.js';
 
 const DEFAULT_PROJECT: HCB_Project = {
   address: "FmgCdasgnQHdvpsRji8eNYer5fJAczdDcDvN3SteAXqa",
-  authority: "4J4rnCy7wWYP1Dgw4EAbTezQvLiCwrCFtfnAZNmQv8u2oni46LdBYiwvHSFR8rPkU1BLUHJCJvEdxAqHmShT1FYc", // your admin public key
-  name: "Honeycomb Duck Game", // Optional display name
-  id: 0, // Optional
-  driver: "" // Optional
+  authority: "4J4rnCy7wWYP1Dgw4EAbTezQvLiCwrCFtfnAZNmQv8u2oni46LdBYiwvHSFR8rPkU1BLUHJCJvEdxAqHmShT1FYc",
+  name: "Honeycomb Duck Game",
+  id: 0,
+  driver: ""
 };
 
 // Helper to map SDK Profile to our App's HCB_Profile type
@@ -28,63 +28,22 @@ const mapSDKProfileToAppProfile = (sdkProfile: any): HCB_Profile => {
     };
 };
 
-// Helper to refetch and update the profile
-const refetchProfile = async (project: HCB_Project, wallet: any, setProfile: any, setError: any, clearState: any, setIsLoading: any) => {
-  console.log('Starting profile refetch with:', {
-    projectAddress: project?.address,
-    walletAddress: wallet?.publicKey?.toBase58(),
-  });
-
-  if (!project || !wallet.publicKey) {
-    console.log('Missing project or wallet, cannot fetch profile');
-    setProfile(null);
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    console.log('Fetching profiles from Honeycomb...');
-    const { profile: profiles } = await honeycombClient.findProfiles({
-      projects: [project.address],
-      addresses: [wallet.publicKey.toBase58()],
-    });
-
-    console.log('Received profiles:', profiles);
-
-    if (profiles && profiles.length > 0) {
-      const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
-      console.log('Mapped profile:', mappedProfile);
-      setProfile(mappedProfile);
-      setCanPlay(true);
-    } else {
-      console.log('No profiles found, setting profile to null');
-      setProfile(null);
-    }
-  } catch (e) {
-    console.error('Profile fetch error:', e);
-    setError('Failed to fetch user profile.');
-    setProfile(null);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
 export const useHoneycomb = () => {
   const wallet = useWallet();
-  const [project] = useState<HCB_Project>(DEFAULT_PROJECT); // Always use the default project
+  const [project] = useState<HCB_Project>(DEFAULT_PROJECT);
   const [profile, setProfile] = useState<HCB_Profile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [canPlay, setCanPlay] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   
   const clearState = () => {
       setError(null);
       setTxSignature(null);
   }
 
-    // Fetch user profile when project and wallet are available
+  // Fetch user profile when project and wallet are available
   useEffect(() => {
     let mounted = true;
     
@@ -161,14 +120,6 @@ export const useHoneycomb = () => {
       const sigs = await signAndSendTransaction(wallet, txResponse);
       setTxSignature(sigs?.[0]?.responses?.[0]?.signature || null);
 
-      const newProject: HCB_Project = {
-          address: projectAddress,
-          authority: wallet.publicKey.toBase58(),
-          name: "Duck Game Adventure",
-          id: 0, // placeholder
-          driver: '' // placeholder
-      };
-
     } catch (e) {
       setError('Failed to create project.');
       console.error(e);
@@ -191,7 +142,7 @@ export const useHoneycomb = () => {
                     authority: project.authority,
                     projectAddress: project.address,
                     payer: wallet.publicKey.toBase58(),
-                    criteriaIndex: KEY_BADGE_INDEX, // Note: use criteriaIndex, not badgeIndex
+                    criteriaIndex: KEY_BADGE_INDEX,
                     condition: BadgesCondition.Public,
                 }
             });
@@ -208,6 +159,45 @@ export const useHoneycomb = () => {
     }
   }, [wallet, project]);
 
+  const createUser = useCallback(async (): Promise<boolean> => {
+    if (!wallet.publicKey) {
+      setError("Wallet not connected.");
+      return false;
+    }
+
+    setIsLoading(true);
+    clearState();
+
+    try {
+      console.log('Creating user...');
+      const { createNewUserTransaction: txResponse } = await honeycombClient.createNewUserTransaction({
+        wallet: wallet.publicKey.toString(),
+        info: {
+          name: `DuckPlayer#${Math.floor(Math.random() * 1000)}`,
+          bio: "An intrepid duck adventurer.",
+          pfp: `https://api.dicebear.com/8.x/pixel-art/svg?seed=${wallet.publicKey.toBase58()}`,
+        },
+        payer: wallet.publicKey.toString(),
+      });
+
+      const sigs = await signAndSendTransaction(wallet, txResponse);
+      const signature = sigs?.[0]?.responses?.[0]?.signature || null;
+      setTxSignature(signature);
+
+      if (signature) {
+        console.log('User created successfully:', signature);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('User creation error:', e);
+      setError(`Failed to create user: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [wallet]);
+
   const createProfile = useCallback(async () => {
     console.log('Starting profile creation...');
     if (!wallet.publicKey || !project) {
@@ -216,41 +206,70 @@ export const useHoneycomb = () => {
       setError(error);
       return;
     }
+    
     setIsLoading(true);
     clearState();
+
     try {
-      console.log('Creating profile with:', {
-        project: project.address,
-        wallet: wallet.publicKey.toBase58(),
-        payer: wallet.publicKey.toBase58(),
+      // Step 1: Check if user exists, if not create user
+      console.log('Checking if user exists...');
+      const { user: existingUsers } = await honeycombClient.findUsers({
+        wallets: [wallet.publicKey.toBase58()]
       });
 
-      const { createNewUserWithProfileTransaction: txResponse } = 
-        await honeycombClient.createNewUserWithProfileTransaction({
+      let userExists = existingUsers && existingUsers.length > 0;
+      
+      if (!userExists) {
+        console.log('User does not exist, creating user first...');
+        const userCreated = await createUser();
+        if (!userCreated) {
+          setError('Failed to create user before profile creation');
+          return;
+        }
+        // Wait a bit for user creation to be confirmed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // Step 2: Authenticate user
+      console.log('Authenticating user...');
+      let authResult: AuthResult;
+      try {
+        authResult = await authenticateUser(wallet);
+        setAuthToken(authResult.accessToken);
+      } catch (authError) {
+        console.error('Authentication failed:', authError);
+        setError('Failed to authenticate user');
+        return;
+      }
+
+      // Step 3: Create profile
+      console.log('Creating profile with authentication...');
+      const { createNewProfileTransaction: txResponse } = 
+        await honeycombClient.createNewProfileTransaction({
           project: project.address,
-          wallet: wallet.publicKey.toBase58(),
           payer: wallet.publicKey.toBase58(),
-          profileIdentity: "main",
-          userInfo: {
+          identity: "main",
+          info: {
             name: `DuckPlayer#${Math.floor(Math.random() * 1000)}`,
             bio: "An intrepid duck adventurer.",
             pfp: `https://api.dicebear.com/8.x/pixel-art/svg?seed=${wallet.publicKey.toBase58()}`,
           },
-      });
+        }, {
+          fetchOptions: {
+            headers: {
+              authorization: `Bearer ${authResult.accessToken}`,
+            },
+          }
+        });
 
       console.log('Transaction response received:', txResponse);
 
       const sigs = await signAndSendTransaction(wallet, txResponse);
       console.log('Transaction signatures:', sigs);
-      console.log('Full signature structure:', JSON.stringify(sigs, null, 2));
       
-      // Try multiple ways to extract the signature
       let signature = null;
       if (sigs && sigs.length > 0) {
         const firstSig = sigs[0];
-        console.log('First signature object:', firstSig);
-        
-        // Try different paths to find the signature
         signature = firstSig?.responses?.[0]?.signature || 
                    (firstSig?.responses && firstSig.responses.find(r => r.signature)?.signature) ||
                    null;
@@ -263,7 +282,7 @@ export const useHoneycomb = () => {
         console.log('Profile creation transaction successful:', signature);
         // Wait a bit for blockchain confirmation before refetching
         console.log('Waiting for blockchain confirmation...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         try {
           const { profile: profiles } = await honeycombClient.findProfiles({
@@ -292,20 +311,51 @@ export const useHoneycomb = () => {
       
     } catch (e) {
       console.error('Profile creation error:', e);
+      if (e instanceof Error && e.message.includes("User already exists with profile")) {
+        // This means the profile actually exists, let's try to fetch it
+        console.log('Profile might already exist, attempting to fetch...');
+        try {
+          const { profile: profiles } = await honeycombClient.findProfiles({
+            projects: [project.address],
+            addresses: [wallet.publicKey.toBase58()],
+          });
+
+          if (profiles && profiles.length > 0) {
+            const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+            console.log('Found existing profile:', mappedProfile);
+            setProfile(mappedProfile);
+            setCanPlay(true);
+            return;
+          }
+        } catch (fetchError) {
+          console.error('Failed to fetch existing profile:', fetchError);
+        }
+      }
       setError(`Failed to create profile: ${e instanceof Error ? e.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
-  }, [wallet, project]);
+  }, [wallet, project, createUser]);
 
   const claimKeyBadge = useCallback(async () => {
     if (!wallet.publicKey || !project || !profile) {
       setError("Cannot claim badge: Missing wallet, project, or profile.");
       return;
     }
+    
     setIsLoading(true);
     clearState();
+    
     try {
+        // Authenticate user for badge claiming if we don't have a token
+        let currentAuthToken = authToken;
+        if (!currentAuthToken) {
+          console.log('No auth token, authenticating user...');
+          const authResult = await authenticateUser(wallet);
+          currentAuthToken = authResult.accessToken;
+          setAuthToken(currentAuthToken);
+        }
+
         const { createClaimBadgeCriteriaTransaction: txResponse } =
             await honeycombClient.createClaimBadgeCriteriaTransaction({
                 args: {
@@ -324,18 +374,29 @@ export const useHoneycomb = () => {
         if (signature) {
           // Wait a bit for blockchain confirmation before refetching
           setTimeout(async () => {
-            await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
+            try {
+              const { profile: profiles } = await honeycombClient.findProfiles({
+                projects: [project.address],
+                addresses: [wallet.publicKey!.toBase58()],
+              });
+
+              if (profiles && profiles.length > 0) {
+                const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+                setProfile(mappedProfile);
+              }
+            } catch (e) {
+              console.error('Failed to refetch profile after badge claim:', e);
+            }
           }, 2000);
         }
     } catch (e) {
         setError('Failed to claim key badge.');
         console.error(e);
-        throw e; // re-throw to be caught by game logic
+        throw e;
     } finally {
         setIsLoading(false);
     }
-  }, [wallet, project, profile]);
-
+  }, [wallet, project, profile, authToken]);
 
   const startGame = useCallback(async () => {
     if (!profile || !canPlay) {
@@ -344,7 +405,6 @@ export const useHoneycomb = () => {
     }
     
     try {
-      // Add your game initialization logic here
       return true;
     } catch (e) {
       setError('Failed to start game');
@@ -360,6 +420,7 @@ export const useHoneycomb = () => {
     error,
     txSignature,
     canPlay,
+    authToken,
     startGame,
     createProject,
     createBadge,

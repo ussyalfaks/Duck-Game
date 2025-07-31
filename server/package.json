@@ -7,7 +7,7 @@
     "create-profiles": "node createProfilesTree.mjs"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.78.4",
-    "@honeycomb-protocol/edge-client": "^0.2.0"
+    "@honeycomb-protocol/edge-client": "^0.0.7-beta.15",
+    "@solana/web3.js": "^1.98.2"
   }
 }

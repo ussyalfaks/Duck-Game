@@ -1,24 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useHoneycomb } from '../hooks/useHoneycomb';
 import { Dashboard } from './Dashboard';
 import { Game } from './Game';
 import { KEY_BADGE_INDEX } from '../constants';
+import { honeycombClient } from '../services/honeycomb';
+
+// Helper to map SDK Profile to our App's HCB_Profile type
+const mapSDKProfileToAppProfile = (sdkProfile: any) => {
+    return {
+        address: sdkProfile.address,
+        name: sdkProfile.info?.name || '',
+        bio: sdkProfile.info?.bio || '',
+        pfp: sdkProfile.info?.pfp || '',
+        project: sdkProfile.project,
+        xp: (sdkProfile.platformData as any)?.xp || 0,
+        achievements: (sdkProfile.platformData as any)?.achievements || [],
+        badges: (sdkProfile.platformData as any)?.badges || [],
+        customData: (sdkProfile.customData as any) || [],
+    };
+};
 
 export const GameView: React.FC = () => {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const {
     project,
     profile,
     isLoading,
     error,
     txSignature,
-    createProject,
     createBadge,
     createProfile,
     claimKeyBadge,
   } = useHoneycomb();
+
+  // Function to handle profile refetch
+  const handleProfileRefetch = useCallback(async () => {
+    if (project && publicKey) {
+      try {
+        const { profile: profiles } = await honeycombClient.findProfiles({
+          projects: [project.address],
+          addresses: [publicKey.toBase58()],
+        });
+        
+        if (profiles && profiles.length > 0) {
+          const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+          window.location.reload(); // Reload to reset the game state with the profile
+        }
+      } catch (e) {
+        console.error('Profile refetch failed:', e);
+      }
+    }
+  }, [project, publicKey]);
 
   const [hasKey, setHasKey] = useState(false);
 
@@ -98,8 +132,25 @@ export const GameView: React.FC = () => {
       );
     }
 
-    // If connected, not loading, but no profile - show profile creation
+    // If connected, not loading, check profile state
     if (connected && !profile) {
+      console.log('Checking profile state');
+      
+      // If there's an error about existing profile, show the game interface
+      if (error && error.includes("User already exists with profile")) {
+        console.log('User has existing profile, refetching...');
+        
+        // Trigger the profile refetch
+        handleProfileRefetch();
+        
+        return (
+          <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
+            <div className="animate-spin h-8 w-8 border-4 border-brand-secondary border-t-transparent rounded-full mb-4"></div>
+            <p className="text-brand-text-muted">Loading your profile...</p>
+          </div>
+        );
+      }
+
       console.log('Showing profile creation screen');
       return (
         <Dashboard 

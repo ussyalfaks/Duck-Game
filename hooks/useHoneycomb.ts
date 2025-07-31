@@ -30,25 +30,42 @@ const mapSDKProfileToAppProfile = (sdkProfile: any): HCB_Profile => {
 
 // Helper to refetch and update the profile
 const refetchProfile = async (project: HCB_Project, wallet: any, setProfile: any, setError: any, clearState: any, setIsLoading: any) => {
-  if (project && wallet.publicKey) {
-    setIsLoading(true);
-    clearState();
-    try {
-      const { profile: profiles } = await honeycombClient.findProfiles({
-        projects: [project.address],
-        addresses: [wallet.publicKey.toBase58()],
-      });
-      if (profiles && profiles.length > 0) {
-        setProfile(mapSDKProfileToAppProfile(profiles[0]));
-      } else {
-        setProfile(null);
-      }
-    } catch (e) {
-      setError('Failed to fetch user profile.');
-      console.error(e);
-    } finally {
-      setIsLoading(false);
+  console.log('Starting profile refetch with:', {
+    projectAddress: project?.address,
+    walletAddress: wallet?.publicKey?.toBase58(),
+  });
+
+  if (!project || !wallet.publicKey) {
+    console.log('Missing project or wallet, cannot fetch profile');
+    setProfile(null);
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    console.log('Fetching profiles from Honeycomb...');
+    const { profile: profiles } = await honeycombClient.findProfiles({
+      projects: [project.address],
+      addresses: [wallet.publicKey.toBase58()],
+    });
+
+    console.log('Received profiles:', profiles);
+
+    if (profiles && profiles.length > 0) {
+      const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+      console.log('Mapped profile:', mappedProfile);
+      setProfile(mappedProfile);
+      setCanPlay(true);
+    } else {
+      console.log('No profiles found, setting profile to null');
+      setProfile(null);
     }
+  } catch (e) {
+    console.error('Profile fetch error:', e);
+    setError('Failed to fetch user profile.');
+    setProfile(null);
+  } finally {
+    setIsLoading(false);
   }
 };
 
@@ -60,39 +77,66 @@ export const useHoneycomb = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [canPlay, setCanPlay] = useState(false);
   
   const clearState = () => {
       setError(null);
       setTxSignature(null);
   }
 
-  // Fetch user profile when project and wallet are available
+    // Fetch user profile when project and wallet are available
   useEffect(() => {
+    let mounted = true;
+    
     const fetchProfile = async () => {
-      if (project && wallet.publicKey) {
-        setIsLoading(true);
-        clearState();
-        try {
-          const { profile: profiles } = await honeycombClient.findProfiles({
-            projects: [project.address],
-            addresses: [wallet.publicKey.toBase58()],
-          });
+      console.log('Initial profile fetch triggered');
+      if (!project || !wallet.publicKey) {
+        console.log('Missing required data:', {
+          hasProject: !!project,
+          hasWallet: !!wallet.publicKey
+        });
+        if (mounted) {
+          setIsLoading(false);
+        }
+        return;
+      }
 
-          if (profiles && profiles.length > 0) {
-            setProfile(mapSDKProfileToAppProfile(profiles[0]));
-          } else {
-            setProfile(null);
-          }
-        } catch (e) {
+      if (!mounted) return;
+      setIsLoading(true);
+      clearState();
+
+      try {
+        const { profile: profiles } = await honeycombClient.findProfiles({
+          projects: [project.address],
+          addresses: [wallet.publicKey.toBase58()],
+        });
+
+        if (!mounted) return;
+
+        if (profiles && profiles.length > 0) {
+          const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+          console.log('Found profile:', mappedProfile);
+          setProfile(mappedProfile);
+          setCanPlay(true);
+        } else {
+          console.log('No profile found');
+          setProfile(null);
+          setCanPlay(false);
+        }
+      } catch (e) {
+        console.error('Profile fetch error:', e);
+        if (mounted) {
           setError('Failed to fetch user profile.');
-          console.error(e);
-        } finally {
+        }
+      } finally {
+        if (mounted) {
           setIsLoading(false);
         }
       }
     };
 
     fetchProfile();
+    return () => { mounted = false; };
   }, [project, wallet.publicKey]);
 
   const createProject = useCallback(async () => {
@@ -165,8 +209,11 @@ export const useHoneycomb = () => {
   }, [wallet, project]);
 
   const createProfile = useCallback(async () => {
+    console.log('Starting profile creation...');
     if (!wallet.publicKey || !project) {
-      setError("Wallet or project not available.");
+      const error = "Wallet or project not available.";
+      console.error(error, { wallet: !!wallet.publicKey, project: !!project });
+      setError(error);
       return;
     }
     setIsLoading(true);
@@ -205,7 +252,6 @@ export const useHoneycomb = () => {
         
         // Try different paths to find the signature
         signature = firstSig?.responses?.[0]?.signature || 
-                   firstSig?.signature || 
                    (firstSig?.responses && firstSig.responses.find(r => r.signature)?.signature) ||
                    null;
       }
@@ -216,15 +262,32 @@ export const useHoneycomb = () => {
       if (signature) {
         console.log('Profile creation transaction successful:', signature);
         // Wait a bit for blockchain confirmation before refetching
-        setTimeout(async () => {
-          await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
-        }, 2000);
+        console.log('Waiting for blockchain confirmation...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+          const { profile: profiles } = await honeycombClient.findProfiles({
+            projects: [project.address],
+            addresses: [wallet.publicKey.toBase58()],
+          });
+
+          if (profiles && profiles.length > 0) {
+            const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
+            console.log('Profile found after creation:', mappedProfile);
+            setProfile(mappedProfile);
+            setCanPlay(true);
+            return;
+          }
+        } catch (e) {
+          console.error('Error fetching profile after creation:', e);
+        }
+
+        // If we didn't find the profile, force a page refresh
+        console.log('Profile not found after creation, refreshing page...');
+        window.location.reload();
       } else {
-        console.warn('No signature found, but transaction may have succeeded. Attempting to refetch profile anyway...');
-        // Even without signature, try to refetch profile in case transaction succeeded
-        setTimeout(async () => {
-          await refetchProfile(project, wallet, setProfile, setError, clearState, setIsLoading);
-        }, 2000);
+        console.warn('No signature found, refreshing page to check profile status...');
+        window.location.reload();
       }
       
     } catch (e) {
@@ -274,12 +337,30 @@ export const useHoneycomb = () => {
   }, [wallet, project, profile]);
 
 
+  const startGame = useCallback(async () => {
+    if (!profile || !canPlay) {
+      setError("Cannot start game: Profile not found");
+      return false;
+    }
+    
+    try {
+      // Add your game initialization logic here
+      return true;
+    } catch (e) {
+      setError('Failed to start game');
+      console.error(e);
+      return false;
+    }
+  }, [profile, canPlay]);
+
   return {
     project,
     profile,
     isLoading,
     error,
     txSignature,
+    canPlay,
+    startGame,
     createProject,
     createBadge,
     createProfile,

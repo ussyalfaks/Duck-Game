@@ -5,6 +5,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { HCB_Project, HCB_Profile } from '../types';
 import { KEY_BADGE_INDEX } from '../constants';
 import { Loader } from './ui/Loader';
+import { PlayButton } from './ui/PlayButton';
 
 interface DashboardProps {
   isLoading: boolean;
@@ -94,11 +95,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <button
                 onClick={onPlayerAction}
                 disabled={isLoading}
-                className="w-full bg-brand-secondary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors"
+                className="w-full bg-brand-secondary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors mb-4"
             >
                 {playerActionText}
             </button>
         )}
+
+        {profile && <PlayButton />}
 
         {profile && renderPlayerStats()}
       </div>

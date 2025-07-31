@@ -1,0 +1,13 @@
+{
+  "name": "duck-game-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "create-project": "node createProject.ts",
+    "create-profiles": "node createProfilesTree.mjs"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.78.4",
+    "@honeycomb-protocol/edge-client": "^0.2.0"
+  }
+}

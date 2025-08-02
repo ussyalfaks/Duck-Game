@@ -7,10 +7,11 @@ import { sendClientTransactions } from "@honeycomb-protocol/edge-client/client/w
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
+//honeycomb-protocol
+// This script creates a profiles tree on the Honeycomb Protocol using the Edge client.
 const API_URL = "https://edge.test.honeycombprotocol.com/";
 const OUTPUT_PATH = join(__dirname, "tree-address.json");
-
+// Ensure the output directory exists
 async function main() {
   try {
     console.log("Reading admin wallet...");

@@ -33,7 +33,7 @@ async function main() {
         }
       }
     });
-
+// Check if the response contains the expected transaction data
     const txResponse = response.createCreateProfilesTreeTransaction;
     const treeAddress = txResponse.treeAddress;
 

@@ -5,11 +5,11 @@
   "scripts": {
     "create-project": "node createProject.ts",
     "create-profiles": "node createProfilesTree.mjs",
+    "create-profiles-alt": "node createProfilesTreeAlt.mjs",
     "create-profiles-cjs": "node createProfilesTree.cjs"
-
   },
   "dependencies": {
-    "@honeycomb-protocol/edge-client": "^0.0.7-beta.15",
-    "@solana/web3.js": "^1.98.2"
+    "@honeycomb-protocol/edge-client": "^0.0.7-beta.14",
+    "@solana/web3.js": "^1.87.6"
   }
 }

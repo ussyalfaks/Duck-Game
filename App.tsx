@@ -21,16 +21,7 @@ function App() {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <div className="min-h-screen bg-brand-bg flex flex-col items-center p-4 sm:p-8">
-            <header className="w-full max-w-7xl flex justify-between items-center mb-8">
-              <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-wider">
-                Honeycomb <span className="text-brand-secondary">Duck Game</span>
-              </h1>
-            </header>
-            <main className="w-full max-w-7xl">
               <GameView />
-            </main>
-          </div>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

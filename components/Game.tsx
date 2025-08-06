@@ -80,9 +80,9 @@ export const Game: React.FC<GameProps> = ({ onKeyCollect, isKeyCollected, onPlay
       // Player movement
       const velocity = playerRef.current.velocity;
       if (keysRef.current.left) {
-        Matter.Body.setVelocity(playerRef.current, { x: -7, y: velocity.y });
+        Matter.Body.setVelocity(playerRef.current, { x: -3.5, y: velocity.y });
       } else if (keysRef.current.right) {
-        Matter.Body.setVelocity(playerRef.current, { x: 7, y: velocity.y });
+        Matter.Body.setVelocity(playerRef.current, { x: 3.5, y: velocity.y });
       }
       
       // Jumping

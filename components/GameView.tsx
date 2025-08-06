@@ -39,6 +39,7 @@ export const GameView: React.FC = () => {
 
   const [hasKey, setHasKey] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   // Debug effect to track state changes
   useEffect(() => {
@@ -49,13 +50,14 @@ export const GameView: React.FC = () => {
       hasProfile: !!profile,
       isLoading,
       error,
+      gameStarted,
       profileData: profile ? {
         name: profile.name,
         address: profile.address,
         badges: profile.badges
       } : null
     });
-  }, [connected, publicKey, project, profile, isLoading, error]);
+  }, [connected, publicKey, project, profile, isLoading, error, gameStarted]);
 
   const handleKeyCollect = async () => {
     try {
@@ -80,6 +82,16 @@ export const GameView: React.FC = () => {
   const handleCreateProfile = async () => {
     console.log('Create profile button clicked');
     await createProfile();
+  };
+
+  const handleStartGame = () => {
+    console.log('Starting game...');
+    setGameStarted(true);
+  };
+
+  const handleBackToHome = () => {
+    console.log('Going back to home...');
+    setGameStarted(false);
   };
 
   const handleReloadProfile = async () => {
@@ -127,179 +139,261 @@ export const GameView: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    // FIRST PRIORITY: If we have a profile, show the game immediately
-    if (profile) {
-      console.log('Rendering game - profile exists:', {
-        name: profile.name,
-        badges: profile.badges,
-        hasOnChainKey
-      });
-      
-      return (
-        <div className="flex flex-col lg:flex-row gap-8 w-full">
-          <Game
-            onKeyCollect={handleKeyCollect}
-            isKeyCollected={hasKey || hasOnChainKey}
-            onPlayerDeath={resetGame}
-          />
-          <Dashboard
-              isLoading={isLoading}
-              error={error}
-              txSignature={txSignature}
-              isAdminView={true}
-              project={project}
-              profile={profile}
-              onAdminAction={createBadge}
-              adminActionText="Create 'Level 1 Key' Badge"
-              message="Welcome, Player! Use WASD or Arrow Keys to move and jump. Collect the key to unlock the door!"
-          />
-        </div>
-      );
-    }
-
-    // If wallet not connected
-    if (!connected) {
-      console.log('Rendering wallet connection screen');
-      return (
-        <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">Welcome to the Duck Game!</h2>
-          <p className="text-brand-text-muted mb-6 text-center">Connect your Solana wallet to begin your on-chain adventure.</p>
-          <WalletMultiButton style={{ backgroundColor: '#e94560', color: 'white' }} />
-        </div>
-      );
-    }
-
-    // If connected but currently loading
-    if (connected && isLoading) {
-      console.log('Rendering loading screen');
-      return (
-        <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
-          <div className="animate-spin h-8 w-8 border-4 border-brand-secondary border-t-transparent rounded-full mb-4"></div>
-          <p className="text-brand-text-muted">
-            {txSignature ? 'Transaction successful! Loading your profile...' : 'Processing... Please wait'}
-          </p>
-          {error && (
-            <div className="mt-4 p-3 bg-red-900/20 border border-red-500 rounded text-red-400 text-sm max-w-md text-center">
-              {error}
-            </div>
-          )}
-          {txSignature && (
-            <div className="mt-4 p-3 bg-green-900/20 border border-green-500 rounded text-green-400 text-sm max-w-md break-all text-center">
-              <p>Transaction: {txSignature.substring(0, 20)}...</p>
-              <a
-                href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-green-300"
-              >
-                View in Explorer
-              </a>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // If connected, not loading, and no profile - show profile creation
-    if (connected && !profile && !isLoading) {
-      console.log('Rendering profile creation screen');
-      
-      return (
-        <div className="w-full">
-          <Dashboard 
-              isLoading={isLoading} 
-              error={error}
-              txSignature={txSignature}
-              isAdminView={false}
-              onPlayerAction={handleCreateProfile}
-              playerActionText="Create Player Profile"
-              message="Create your on-chain player profile to enter the game. This will store your progress and achievements on the blockchain."
-          />
-          
-          {/* Manual reload button for existing profiles */}
-          {error && error.includes("Profile already exists") && (
-            <div className="mt-4 bg-brand-surface p-4 rounded-lg text-center">
-              <p className="text-brand-text-muted mb-3">
-                Your profile exists but couldn't be loaded automatically.
-              </p>
+  // If game is started and profile exists, show the game
+  if (gameStarted && profile) {
+    console.log('Rendering game - profile exists:', {
+      name: profile.name,
+      badges: profile.badges,
+      hasOnChainKey
+    });
+    
+    return (
+      <div className="flex flex-col lg:flex-row gap-8 w-full">
+        <Game
+          onKeyCollect={handleKeyCollect}
+          isKeyCollected={hasKey || hasOnChainKey}
+          onPlayerDeath={resetGame}
+        />
+        <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold text-brand-secondary">Game</h2>
               <button
-                onClick={handleReloadProfile}
-                disabled={isLoading}
-                className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90 disabled:bg-opacity-50"
+                onClick={handleBackToHome}
+                className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
               >
-                {isLoading ? 'Loading...' : 'Load Existing Profile'}
+                Back to Home
               </button>
             </div>
-          )}
-          
-          {/* Debug Information */}
-          <div className="mt-8 bg-brand-surface p-4 rounded-lg">
-            <button 
-              onClick={() => setShowDebug(!showDebug)}
-              className="text-sm text-brand-text-muted hover:text-white mb-2"
-            >
-              {showDebug ? 'Hide' : 'Show'} Debug Info
-            </button>
+            <p className="text-brand-text-muted mb-6">Use WASD or Arrow Keys to move and jump. Collect the key to unlock the door!</p>
             
-            {showDebug && (
-              <div className="text-xs text-brand-text-muted space-y-1">
-                <p>Wallet: {publicKey?.toBase58()}</p>
-                <p>Connected: {connected.toString()}</p>
-                <p>Loading: {isLoading.toString()}</p>
-                <p>Has Project: {(!!project).toString()}</p>
-                <p>Has Profile: {(!!profile).toString()}</p>
-                <p>Error: {error || 'None'}</p>
-                <p>TX Signature: {txSignature || 'None'}</p>
+            {profile && (
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <img src={profile.pfp} alt="Player PFP" className="w-16 h-16 rounded-full bg-brand-primary" />
+                  <div>
+                    <h3 className="text-xl font-bold">{profile.name}</h3>
+                    <p className="text-sm text-brand-text-muted font-mono break-all">{profile.address}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p><strong>XP:</strong> {profile.xp}</p>
+                  <div>
+                    <strong>Badges:</strong>
+                    {profile.badges.includes(KEY_BADGE_INDEX) ? (
+                      <span className="ml-2 inline-block bg-yellow-500 text-gray-900 px-2 py-1 text-xs font-bold rounded">Level 1 Key</span>
+                    ) : (
+                      <span className="ml-2 text-brand-text-muted">None</span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      );
-    }
 
-    // Fallback - shouldn't reach here normally
-    console.log('Rendering fallback screen');
-    return (
-      <div className="flex flex-col items-center justify-center bg-brand-surface p-8 rounded-lg shadow-lg">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-bold mb-2">Something's not right...</h3>
-          <p className="text-brand-text-muted mb-4">
-            Connected: {connected.toString()}<br/>
-            Loading: {isLoading.toString()}<br/>
-            Has Profile: {(!!profile).toString()}
+          <div>
+            {/* Admin controls */}
+            {project && publicKey && project.authority === publicKey.toBase58() && (
+              <div className="mt-6 pt-6 border-t border-brand-primary">
+                <h3 className="font-bold text-lg mb-2">Admin Controls</h3>
+                <button
+                  onClick={createBadge}
+                  disabled={isLoading}
+                  className="w-full bg-brand-primary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors"
+                >
+                  Create 'Level 1 Key' Badge
+                </button>
+              </div>
+            )}
+            
+            {/* Status */}
+            <div className="min-h-[100px] mt-4">
+              {isLoading && <div className="flex items-center gap-2"><div className="animate-spin h-5 w-5 border-2 border-brand-secondary border-t-transparent rounded-full"></div><p>Processing transaction...</p></div>}
+              {error && <p className="text-red-400 text-sm break-words">Error: {error}</p>}
+              {txSignature && (
+                <div className="text-green-400 text-sm break-all">
+                  <p>Success! Tx:</p>
+                  <a
+                    href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-green-300"
+                  >
+                    {txSignature}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Landing page - centered layout with proper flow
+  return (
+    <div className="min-h-[600px] flex flex-col items-center justify-center">
+      <div className=" p-8 max-w-md w-full mx-4 text-center">
+        <div className="mb-8">
+          <p className="text-brand-text-muted mb-6">
+            An on-chain adventure where your progress is stored on the Solana blockchain using Honeycomb Protocol.
           </p>
         </div>
-        
-        <div className="flex gap-4">
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-brand-secondary text-white px-4 py-2 rounded hover:bg-opacity-90"
-          >
-            Refresh Page
-          </button>
-          
-          <button 
-            onClick={handleCreateProfile}
-            disabled={isLoading || !connected}
-            className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90 disabled:bg-opacity-50"
-          >
-            Try Create Profile
-          </button>
-        </div>
-        
-        {error && (
-          <div className="mt-4 p-3 bg-red-900/20 border border-red-500 rounded text-red-400 text-sm max-w-md text-center">
+
+        {/* Step 1: Connect Wallet */}
+        {!connected && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Step 1: Connect Your Wallet</h2>
+            <p className="text-sm text-brand-text-muted mb-6">
+              Connect your Solana wallet to begin your on-chain adventure.
+            </p>
+            <div className="flex justify-center">
+              <WalletMultiButton 
+                style={{ 
+                  backgroundColor: '#e94560', 
+                  color: 'white',
+                  height: '48px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  borderRadius: '8px'
+                }} 
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Create Profile (if connected but no profile) */}
+        {connected && !profile && !isLoading && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Step 2: Create Profile</h2>
+              <WalletMultiButton style={{ backgroundColor: '#0f3460', height: '32px', fontSize: '12px' }} />
+            </div>
+            <p className="text-sm text-brand-text-muted mb-6">
+              Create your on-chain player profile to store your progress and achievements on the blockchain.
+            </p>
+            <button
+              onClick={handleCreateProfile}
+              disabled={isLoading}
+              className="w-full bg-brand-secondary text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors text-lg"
+            >
+              Create Player Profile
+            </button>
+
+            {/* Manual reload for existing profiles */}
+            {error && error.includes("Profile already exists") && (
+              <div className="mt-4 p-4 bg-brand-primary/20 rounded-lg">
+                <p className="text-sm text-brand-text-muted mb-3">
+                  Your profile exists but couldn't be loaded automatically.
+                </p>
+                <button
+                  onClick={handleReloadProfile}
+                  disabled={isLoading}
+                  className="w-full bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90 disabled:bg-opacity-50"
+                >
+                  {isLoading ? 'Loading...' : 'Load Existing Profile'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {connected && isLoading && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Loading...</h2>
+              <WalletMultiButton style={{ backgroundColor: '#0f3460', height: '32px', fontSize: '12px' }} />
+            </div>
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="animate-spin h-8 w-8 border-4 border-brand-secondary border-t-transparent rounded-full mb-4"></div>
+              <p className="text-brand-text-muted text-center">
+                {txSignature ? 'Transaction successful! Loading your profile...' : 'Processing... Please wait'}
+              </p>
+            </div>
+
+            {txSignature && (
+              <div className="mt-4 p-3 bg-green-900/20 border border-green-500 rounded text-green-400 text-sm break-all text-center">
+                <p className="mb-2">Transaction successful!</p>
+                <a
+                  href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-green-300"
+                >
+                  View in Explorer
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Play Game (if profile exists) */}
+        {connected && profile && !isLoading && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Ready to Play!</h2>
+              <WalletMultiButton style={{ backgroundColor: '#0f3460', height: '32px', fontSize: '12px' }} />
+            </div>
+
+            {/* Player info */}
+            <div className="bg-brand-primary/20 p-4 rounded-lg mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <img src={profile.pfp} alt="Player PFP" className="w-12 h-12 rounded-full bg-brand-primary" />
+                <div className="text-left">
+                  <h3 className="font-bold">{profile.name}</h3>
+                  <p className="text-xs text-brand-text-muted">XP: {profile.xp}</p>
+                </div>
+              </div>
+              <div className="text-sm">
+                <strong>Badges:</strong>
+                {profile.badges.includes(KEY_BADGE_INDEX) ? (
+                  <span className="ml-2 inline-block bg-yellow-500 text-gray-900 px-2 py-1 text-xs font-bold rounded">Level 1 Key</span>
+                ) : (
+                  <span className="ml-2 text-brand-text-muted">None</span>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleStartGame}
+              className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors text-lg"
+            >
+              🎮 Start Playing
+            </button>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && !isLoading && (
+          <div className="mt-4 p-3 bg-red-900/20 border border-red-500 rounded text-red-400 text-sm text-center">
             {error}
           </div>
         )}
-      </div>
-    );
-  };
 
-  return (
-    <div className="w-full">
-      {renderContent()}
+        {/* Debug Information Toggle */}
+        <div className="mt-6 pt-4 border-t border-brand-primary/30">
+          <button 
+            onClick={() => setShowDebug(!showDebug)}
+            className="text-xs text-brand-text-muted hover:text-white transition-colors"
+          >
+            {showDebug ? 'Hide' : 'Show'} Debug Info
+          </button>
+          
+          {showDebug && (
+            <div className="mt-2 text-xs text-brand-text-muted space-y-1 text-left bg-black/20 p-3 rounded">
+              <p><strong>Wallet:</strong> {publicKey?.toBase58().substring(0, 20)}...</p>
+              <p><strong>Connected:</strong> {connected.toString()}</p>
+              <p><strong>Loading:</strong> {isLoading.toString()}</p>
+              <p><strong>Has Project:</strong> {(!!project).toString()}</p>
+              <p><strong>Has Profile:</strong> {(!!profile).toString()}</p>
+              <p><strong>Game Started:</strong> {gameStarted.toString()}</p>
+              <p><strong>Error:</strong> {error || 'None'}</p>
+              <p><strong>TX:</strong> {txSignature ? `${txSignature.substring(0, 20)}...` : 'None'}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

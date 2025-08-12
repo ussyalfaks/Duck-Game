@@ -38,6 +38,9 @@ export const Game: React.FC<GameProps> = ({
   const [timeLeft, setTimeLeft] = useState(SEASON_1_TIME_LIMIT);
   const [localKeyCollected, setLocalKeyCollected] = useState(false);
   const [duckFrame, setDuckFrame] = useState(0);
+  const [hearts, setHearts] = useState(3); // Hearts state
+  const [isInvincible, setIsInvincible] = useState(false); // Invincibility frames
+  
   const keysRef = useRef({ left: false, right: false, up: false });
   const canJumpRef = useRef(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,6 +51,71 @@ export const Game: React.FC<GameProps> = ({
     return SEASON_1_DATA[levelKey];
   };
 
+  // Reset level function
+  const resetLevel = () => {
+    console.log(`Resetting level ${currentLevel}...`);
+    const currentLevelData = getCurrentLevelData();
+    
+    // Reset player position
+    if (playerRef.current) {
+      Matter.Body.setPosition(playerRef.current, { 
+        x: currentLevelData.player.x, 
+        y: currentLevelData.player.y 
+      });
+      Matter.Body.setVelocity(playerRef.current, { x: 0, y: 0 });
+    }
+    
+    setPlayerPosition({ 
+      x: currentLevelData.player.x, 
+      y: currentLevelData.player.y 
+    });
+    setLocalKeyCollected(false);
+    setLevelWin(false);
+    
+    // Start invincibility frames for 2 seconds
+    setIsInvincible(true);
+    setTimeout(() => setIsInvincible(false), 2000);
+  };
+
+  // Reset season function
+  const resetSeason = () => {
+    console.log('Resetting entire season...');
+    setCurrentLevel(1);
+    setHearts(3);
+    setTimeLeft(SEASON_1_TIME_LIMIT);
+    setSeasonComplete(false);
+    setGameOver(false);
+    setLevelWin(false);
+    setLocalKeyCollected(false);
+    setIsInvincible(false);
+    
+    // Setup level 1
+    setupLevel(1);
+    
+    // Reset player position to level 1
+    const level1Data = SEASON_1_DATA.level1;
+    setPlayerPosition({ x: level1Data.player.x, y: level1Data.player.y });
+  };
+
+  // Handle spike collision
+  const handleSpikeHit = () => {
+    if (isInvincible) return; // Don't take damage during invincibility frames
+    
+    const newHearts = hearts - 1;
+    setHearts(newHearts);
+    
+    if (newHearts <= 0) {
+      // No hearts left, reset the entire season
+      setGameOver(true);
+      setTimeout(() => {
+        resetSeason();
+      }, 2000);
+    } else {
+      // Still have hearts, just reset the current level
+      resetLevel();
+    }
+  };
+
   // Timer effect
   useEffect(() => {
     if (seasonComplete || gameOver) return;
@@ -56,6 +124,9 @@ export const Game: React.FC<GameProps> = ({
       setTimeLeft(prev => {
         if (prev <= 1) {
           setGameOver(true);
+          setTimeout(() => {
+            resetSeason();
+          }, 3000);
           return 0;
         }
         return prev - 1;
@@ -255,16 +326,18 @@ export const Game: React.FC<GameProps> = ({
       }
     }
 
-    // Spike collision
-    for (const spike of currentLevelData.spikes) {
-      const spikeBox = { x: spike.x, y: spike.y, w: spike.width, h: spike.height };
-      if (playerBox.x < spikeBox.x + spikeBox.w && playerBox.x + playerBox.w > spikeBox.x &&
-          playerBox.y < spikeBox.y + spikeBox.h && playerBox.y + playerBox.h > spikeBox.y) {
-        onPlayerDeath();
-        break;
+    // Spike collision (only if not invincible)
+    if (!isInvincible) {
+      for (const spike of currentLevelData.spikes) {
+        const spikeBox = { x: spike.x, y: spike.y, w: spike.width, h: spike.height };
+        if (playerBox.x < spikeBox.x + spikeBox.w && playerBox.x + playerBox.w > spikeBox.x &&
+            playerBox.y < spikeBox.y + spikeBox.h && playerBox.y + playerBox.h > spikeBox.y) {
+          handleSpikeHit();
+          break;
+        }
       }
     }
-  }, [playerPosition, localKeyCollected, levelWin, gameOver, seasonComplete, onPlayerDeath]);
+  }, [playerPosition, localKeyCollected, levelWin, gameOver, seasonComplete, isInvincible, hearts]);
 
   const currentLevelData = getCurrentLevelData();
   
@@ -281,6 +354,18 @@ export const Game: React.FC<GameProps> = ({
       {/* Level Display */}
       <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg font-bold text-lg z-10">
         Level {currentLevel}/5
+      </div>
+
+      {/* Hearts Display */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 px-4 py-2 rounded-lg z-10 flex items-center gap-1">
+        {[...Array(3)].map((_, i) => (
+          <img
+            key={i}
+            src={ASSETS.HEART}
+            alt="Heart"
+            className={`w-6 h-6 ${i < hearts ? 'opacity-100' : 'opacity-30'} ${isInvincible && i === hearts - 1 ? 'animate-pulse' : ''}`}
+          />
+        ))}
       </div>
 
       <img src={ASSETS.CLOUDS} alt="Clouds" className="absolute top-0 left-0 w-full h-auto opacity-70" />
@@ -300,7 +385,19 @@ export const Game: React.FC<GameProps> = ({
       
       {currentLevelData.spikes.map((spike, i) => <img key={i} src={ASSETS.SPIKE} alt="Spike" className="absolute" style={{ left: spike.x, top: spike.y, width: spike.width, height: spike.height }} />)}
       
-      <img src={DUCK_WALK_FRAMES[duckFrame]} alt="Player" className="absolute" style={{ left: playerPosition.x - 32, top: playerPosition.y - 32, width: 64, height: 64, transform: keysRef.current.left ? 'scaleX(-1)' : 'scaleX(1)' }}/>
+      {/* Player with invincibility visual effect */}
+      <img 
+        src={DUCK_WALK_FRAMES[duckFrame]} 
+        alt="Player" 
+        className={`absolute ${isInvincible ? 'animate-pulse opacity-60' : ''}`} 
+        style={{ 
+          left: playerPosition.x - 32, 
+          top: playerPosition.y - 32, 
+          width: 64, 
+          height: 64, 
+          transform: keysRef.current.left ? 'scaleX(-1)' : 'scaleX(1)' 
+        }}
+      />
       
       {/* Level Complete Modal */}
       {levelWin && !seasonComplete && (
@@ -321,7 +418,7 @@ export const Game: React.FC<GameProps> = ({
             <p className="mb-2">Congratulations! You've completed all 5 levels!</p>
             <p className="mb-6 text-lg font-semibold">Final Time: {SEASON_1_TIME_LIMIT - timeLeft}s</p>
             <div className="space-x-4">
-              <button onClick={onPlayerDeath} className="bg-brand-secondary text-white font-bold py-2 px-6 rounded">Play Again</button>
+              <button onClick={resetSeason} className="bg-brand-secondary text-white font-bold py-2 px-6 rounded">Play Again</button>
               <button onClick={() => window.location.reload()} className="bg-brand-primary text-white font-bold py-2 px-6 rounded">Go Home</button>
             </div>
           </div>
@@ -332,13 +429,11 @@ export const Game: React.FC<GameProps> = ({
       {gameOver && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-red-800 text-white p-8 rounded-lg shadow-xl text-center">
-            <h2 className="text-4xl font-bold mb-4">⏰ Time's Up! ⏰</h2>
-            <p className="mb-2">You ran out of time!</p>
+            <h2 className="text-4xl font-bold mb-4">{hearts <= 0 ? '💔 No Hearts Left!' : '⏰ Time\'s Up!'}</h2>
+            <p className="mb-2">{hearts <= 0 ? 'You lost all your hearts!' : 'You ran out of time!'}</p>
             <p className="mb-6">You reached Level {currentLevel} out of 5</p>
-            <div className="space-x-4">
-              <button onClick={onPlayerDeath} className="bg-brand-secondary text-white font-bold py-2 px-6 rounded">Play Again</button>
-              <button onClick={() => window.location.reload()} className="bg-brand-primary text-white font-bold py-2 px-6 rounded">Go Home</button>
-            </div>
+            <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-sm">Restarting season...</p>
           </div>
         </div>
       )}

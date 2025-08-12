@@ -1,4 +1,3 @@
-
 // Using image URLs from a public host (e.g., imgur) as placeholders for real assets.
 export const ASSETS = {
   DUCK_WALK_0: '../assets/Duck_Sprite_Walk_0.png', // Standing
@@ -11,4 +10,5 @@ export const ASSETS = {
   DOOR_UNLOCKED: '../assets/Door_Unlocked_Sprite.png',
   SPIKE: '../assets/Spike_Sprite.png',
   CLOUDS: '../assets/Clouds.png',
+  HEART: '../assets/Heart1.png', // Add heart asset
 };

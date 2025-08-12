@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { HCB_Project, HCB_Profile } from '../types';
-import { KEY_BADGE_INDEX } from '../constants';
+import { KEY_BADGE_INDEX, ADMIN_ADDRESS } from '../constants';
 import { Loader } from './ui/Loader';
 import { PlayButton } from './ui/PlayButton';
 
@@ -35,7 +34,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   playerActionText,
 }) => {
     const { publicKey } = useWallet();
-    const isAdmin = project && publicKey && project.authority === publicKey.toBase58();
+    
+    // Check if current wallet is the admin address
+    const isAdmin = publicKey && publicKey.toBase58() === ADMIN_ADDRESS;
 
   const renderStatus = () => (
     <div className="min-h-[100px] mt-4">
@@ -107,9 +108,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div>
+        {/* Admin controls - only show if current wallet matches ADMIN_ADDRESS */}
         {isAdmin && onAdminAction && (
              <div className="mt-6 pt-6 border-t border-brand-primary">
                 <h3 className="font-bold text-lg mb-2">Admin Controls</h3>
+                <p className="text-xs text-brand-text-muted mb-3">Authenticated as Admin</p>
                 <button
                     onClick={onAdminAction}
                     disabled={isLoading}

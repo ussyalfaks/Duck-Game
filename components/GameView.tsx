@@ -5,7 +5,7 @@ import { useHoneycomb } from '../hooks/useHoneycomb';
 import { honeycombClient } from '../services/honeycomb';
 import { Dashboard } from './Dashboard';
 import { Game } from './Game';
-import { KEY_BADGE_INDEX } from '../constants';
+import { KEY_BADGE_INDEX, ADMIN_ADDRESS } from '../constants';
 
 // Helper to map SDK Profile to our App's HCB_Profile type
 const mapSDKProfileToAppProfile = (sdkProfile: any) => {
@@ -41,6 +41,9 @@ export const GameView: React.FC = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
 
+  // Check if current wallet is the admin address
+  const isAdmin = publicKey && publicKey.toBase58() === ADMIN_ADDRESS;
+
   // Debug effect to track state changes
   useEffect(() => {
     console.log('GameView State Update:', {
@@ -51,13 +54,16 @@ export const GameView: React.FC = () => {
       isLoading,
       error,
       gameStarted,
+      isAdmin,
+      adminAddress: ADMIN_ADDRESS,
+      currentAddress: publicKey?.toBase58(),
       profileData: profile ? {
         name: profile.name,
         address: profile.address,
         badges: profile.badges
       } : null
     });
-  }, [connected, publicKey, project, profile, isLoading, error, gameStarted]);
+  }, [connected, publicKey, project, profile, isLoading, error, gameStarted, isAdmin]);
 
   const handleKeyCollect = async () => {
     try {
@@ -192,10 +198,11 @@ export const GameView: React.FC = () => {
           </div>
 
           <div>
-            {/* Admin controls */}
-            {project && publicKey && project.authority === publicKey.toBase58() && (
+            {/* Admin controls - only show if current wallet matches ADMIN_ADDRESS */}
+            {isAdmin && (
               <div className="mt-6 pt-6 border-t border-brand-primary">
                 <h3 className="font-bold text-lg mb-2">Admin Controls</h3>
+                <p className="text-xs text-brand-text-muted mb-3">Authenticated as Admin</p>
                 <button
                   onClick={createBadge}
                   disabled={isLoading}
@@ -388,6 +395,8 @@ export const GameView: React.FC = () => {
               <p><strong>Has Project:</strong> {(!!project).toString()}</p>
               <p><strong>Has Profile:</strong> {(!!profile).toString()}</p>
               <p><strong>Game Started:</strong> {gameStarted.toString()}</p>
+              <p><strong>Is Admin:</strong> {isAdmin.toString()}</p>
+              <p><strong>Admin Address:</strong> {ADMIN_ADDRESS.substring(0, 20)}...</p>
               <p><strong>Error:</strong> {error || 'None'}</p>
               <p><strong>TX:</strong> {txSignature ? `${txSignature.substring(0, 20)}...` : 'None'}</p>
             </div>

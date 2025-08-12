@@ -1,7 +1,9 @@
-
 // Use Honeynet for testing with free SOL airdrops
 export const HONEYCOMB_RPC_URL = "https://rpc.test.honeycombprotocol.com";
 export const HONEYCOMB_API_URL = "https://edge.test.honeycombprotocol.com/";
+
+// Admin address from environment variable
+export const ADMIN_ADDRESS = process.env.VITE_ADMIN_ADDRESS;
 
 // Hardcoded Level 1 Layout for the Duck Game
 export const LEVEL_1_DATA = {

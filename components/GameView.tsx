@@ -40,6 +40,7 @@ export const GameView: React.FC = () => {
   const [hasKey, setHasKey] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [seasonComplete, setSeasonComplete] = useState(false);
 
   // Check if current wallet is the admin address
   const isAdmin = publicKey && publicKey.toBase58() === ADMIN_ADDRESS;
@@ -54,6 +55,7 @@ export const GameView: React.FC = () => {
       isLoading,
       error,
       gameStarted,
+      seasonComplete,
       isAdmin,
       adminAddress: ADMIN_ADDRESS,
       currentAddress: publicKey?.toBase58(),
@@ -63,24 +65,26 @@ export const GameView: React.FC = () => {
         badges: profile.badges
       } : null
     });
-  }, [connected, publicKey, project, profile, isLoading, error, gameStarted, isAdmin]);
+  }, [connected, publicKey, project, profile, isLoading, error, gameStarted, seasonComplete, isAdmin]);
 
+  // DISABLED: Badge claiming functionality
   const handleKeyCollect = async () => {
-    try {
-        console.log('Attempting to claim key badge...');
-        await claimKeyBadge();
-        setHasKey(true);
-        console.log('Key badge claimed successfully');
-    } catch(e) {
-        console.error("Key collection failed in GameView", e);
-        // Do not set key if transaction fails
-    }
+    console.log('Key collected! (Badge claiming disabled)');
+    // No longer claims badges - just local state
+    setHasKey(true);
+  };
+
+  const handleSeasonComplete = () => {
+    console.log('Season 1 completed!');
+    setSeasonComplete(true);
   };
 
   const hasOnChainKey = profile?.badges?.includes(KEY_BADGE_INDEX) || false;
 
   const resetGame = () => {
       console.log('Resetting game...');
+      setSeasonComplete(false);
+      setHasKey(false);
       // For this demo, reloading is the easiest way to reset the Matter.js state
       window.location.reload();
   }
@@ -91,13 +95,16 @@ export const GameView: React.FC = () => {
   };
 
   const handleStartGame = () => {
-    console.log('Starting game...');
+    console.log('Starting Season 1...');
     setGameStarted(true);
+    setSeasonComplete(false);
   };
 
   const handleBackToHome = () => {
     console.log('Going back to home...');
     setGameStarted(false);
+    setSeasonComplete(false);
+    setHasKey(false);
   };
 
   const handleReloadProfile = async () => {
@@ -147,7 +154,7 @@ export const GameView: React.FC = () => {
 
   // If game is started and profile exists, show the game
   if (gameStarted && profile) {
-    console.log('Rendering game - profile exists:', {
+    console.log('Rendering Season 1 game - profile exists:', {
       name: profile.name,
       badges: profile.badges,
       hasOnChainKey
@@ -159,11 +166,12 @@ export const GameView: React.FC = () => {
           onKeyCollect={handleKeyCollect}
           isKeyCollected={hasKey || hasOnChainKey}
           onPlayerDeath={resetGame}
+          onSeasonComplete={handleSeasonComplete}
         />
         <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-brand-secondary">Game</h2>
+              <h2 className="text-2xl font-bold text-brand-secondary">Season 1</h2>
               <button
                 onClick={handleBackToHome}
                 className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
@@ -171,7 +179,10 @@ export const GameView: React.FC = () => {
                 Back to Home
               </button>
             </div>
-            <p className="text-brand-text-muted mb-6">Use WASD or Arrow Keys to move and jump. Collect the key to unlock the door!</p>
+            <p className="text-brand-text-muted mb-6">
+              Complete all 5 levels in 30 seconds! Use WASD or Arrow Keys to move and jump. 
+              Collect the key to unlock the door in each level!
+            </p>
             
             {profile && (
               <div className="mb-6">
@@ -185,16 +196,27 @@ export const GameView: React.FC = () => {
                 <div className="space-y-2">
                   <p><strong>XP:</strong> {profile.xp}</p>
                   <div>
-                    <strong>Badges:</strong>
-                    {profile.badges.includes(KEY_BADGE_INDEX) ? (
-                      <span className="ml-2 inline-block bg-yellow-500 text-gray-900 px-2 py-1 text-xs font-bold rounded">Level 1 Key</span>
+                    <strong>Status:</strong>
+                    {seasonComplete ? (
+                      <span className="ml-2 inline-block bg-green-500 text-white px-2 py-1 text-xs font-bold rounded">Season 1 Complete!</span>
                     ) : (
-                      <span className="ml-2 text-brand-text-muted">None</span>
+                      <span className="ml-2 inline-block bg-blue-500 text-white px-2 py-1 text-xs font-bold rounded">In Progress</span>
                     )}
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Game Instructions */}
+            <div className="bg-brand-primary/20 p-4 rounded-lg mb-4">
+              <h4 className="font-bold mb-2">🎮 Season 1 Rules:</h4>
+              <ul className="text-sm space-y-1 text-brand-text-muted">
+                <li>• Complete 5 levels in 30 seconds</li>
+                <li>• Collect key → unlock door → next level</li>
+                <li>• Avoid spikes (instant death)</li>
+                <li>• Run out of time = Game Over</li>
+              </ul>
+            </div>
           </div>
 
           <div>
@@ -208,7 +230,7 @@ export const GameView: React.FC = () => {
                   disabled={isLoading}
                   className="w-full bg-brand-primary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 disabled:bg-opacity-50 transition-colors"
                 >
-                  Create 'Level 1 Key' Badge
+                  Create 'Level 1 Key' Badge (Disabled)
                 </button>
               </div>
             )}
@@ -242,8 +264,9 @@ export const GameView: React.FC = () => {
     <div className="min-h-[600px] flex flex-col items-center justify-center">
       <div className=" p-8 max-w-md w-full mx-4 text-center">
         <div className="mb-8">
+          <h1 className="text-4xl font-bold text-brand-secondary mb-4">🦆 Duck Game</h1>
           <p className="text-brand-text-muted mb-6">
-            An on-chain adventure where your progress is stored on the Solana blockchain using Honeycomb Protocol.
+            Season 1: Complete 5 challenging levels in 30 seconds! Your progress is stored on the Solana blockchain using Honeycomb Protocol.
           </p>
         </div>
 
@@ -339,7 +362,7 @@ export const GameView: React.FC = () => {
         {connected && profile && !isLoading && (
           <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Ready to Play!</h2>
+              <h2 className="text-xl font-semibold">Ready to Play Season 1!</h2>
               <WalletMultiButton style={{ backgroundColor: '#0f3460', height: '32px', fontSize: '12px' }} />
             </div>
 
@@ -352,21 +375,25 @@ export const GameView: React.FC = () => {
                   <p className="text-xs text-brand-text-muted">XP: {profile.xp}</p>
                 </div>
               </div>
-              <div className="text-sm">
-                <strong>Badges:</strong>
-                {profile.badges.includes(KEY_BADGE_INDEX) ? (
-                  <span className="ml-2 inline-block bg-yellow-500 text-gray-900 px-2 py-1 text-xs font-bold rounded">Level 1 Key</span>
-                ) : (
-                  <span className="ml-2 text-brand-text-muted">None</span>
-                )}
-              </div>
+            </div>
+
+            {/* Season 1 Challenge Info */}
+            <div className="bg-yellow-500/20 border border-yellow-500 p-4 rounded-lg mb-6">
+              <h3 className="font-bold text-yellow-300 mb-2">⚡ Season 1 Challenge</h3>
+              <ul className="text-sm space-y-1 text-left">
+                <li>🎯 Complete 5 unique levels</li>
+                <li>⏰ 30 seconds total time limit</li>
+                <li>🔑 Collect keys to unlock doors</li>
+                <li>💀 Avoid deadly spikes</li>
+                <li>🏆 Reach the end to win!</li>
+              </ul>
             </div>
 
             <button
               onClick={handleStartGame}
               className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors text-lg"
             >
-              🎮 Start Playing
+              🚀 Start Season 1
             </button>
           </div>
         )}
@@ -395,8 +422,9 @@ export const GameView: React.FC = () => {
               <p><strong>Has Project:</strong> {(!!project).toString()}</p>
               <p><strong>Has Profile:</strong> {(!!profile).toString()}</p>
               <p><strong>Game Started:</strong> {gameStarted.toString()}</p>
+              <p><strong>Season Complete:</strong> {seasonComplete.toString()}</p>
               <p><strong>Is Admin:</strong> {isAdmin.toString()}</p>
-              <p><strong>Admin Address:</strong> {ADMIN_ADDRESS.substring(0, 20)}...</p>
+              {/* <p><strong>Admin Address:</strong> {ADMIN_ADDRESS?.substring(0, 20)}...</p> */}
               <p><strong>Error:</strong> {error || 'None'}</p>
               <p><strong>TX:</strong> {txSignature ? `${txSignature.substring(0, 20)}...` : 'None'}</p>
             </div>

@@ -6,9 +6,9 @@ import { HCB_Project, HCB_Profile, BadgesCondition } from '../types';
 import { KEY_BADGE_INDEX } from '../constants';
 
 const DEFAULT_PROJECT: HCB_Project = {
-  address: "FmgCdasgnQHdvpsRji8eNYer5fJAczdDcDvN3SteAXqa",
-  authority: "4J4rnCy7wWYP1Dgw4EAbTezQvLiCwrCFtfnAZNmQv8u2oni46LdBYiwvHSFR8rPkU1BLUHJCJvEdxAqHmShT1FYc",
-  name: "Honeycomb Duck Game",
+  address: "Hq63HojpwE3pK91i5kU2B7a4a3xfLrcGwTqDc8H1ftR",
+  authority: "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+  name: "Duck Game Project",
   id: 0,
   driver: ""
 };

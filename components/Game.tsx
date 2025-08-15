@@ -41,6 +41,11 @@ export const Game: React.FC<GameProps> = ({
   const [hearts, setHearts] = useState(3); // Hearts state
   const [isInvincible, setIsInvincible] = useState(false); // Invincibility frames
   
+  // Sound effects
+  const keySound = useRef(new Audio('/assets/Key.wav'));
+  const unlockSound = useRef(new Audio('/assets/Unlock.wav'));
+  const quackSound = useRef(new Audio('/assets/Quack.mp3'));
+  
   const keysRef = useRef({ left: false, right: false, up: false });
   const canJumpRef = useRef(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -100,6 +105,10 @@ export const Game: React.FC<GameProps> = ({
   // Handle spike collision
   const handleSpikeHit = () => {
     if (isInvincible) return; // Don't take damage during invincibility frames
+    
+    // Play quack sound when hitting spike
+    quackSound.current.currentTime = 0;
+    quackSound.current.play().catch(e => console.log('Could not play quack sound:', e));
     
     const newHearts = hearts - 1;
     setHearts(newHearts);
@@ -279,8 +288,8 @@ export const Game: React.FC<GameProps> = ({
       setPlayerPosition({ x: playerRef.current.position.x, y: playerRef.current.position.y });
       
       // Screen wrapping
-      if (playerRef.current.position.x > 768 + 25) Matter.Body.setPosition(playerRef.current, {x: -25, y: playerRef.current.position.y});
-      if (playerRef.current.position.x < -25) Matter.Body.setPosition(playerRef.current, {x: 768 + 25, y: playerRef.current.position.y});
+      if (playerRef.current.position.x > 800 + 25) Matter.Body.setPosition(playerRef.current, {x: -25, y: playerRef.current.position.y});
+      if (playerRef.current.position.x < -25) Matter.Body.setPosition(playerRef.current, {x: 800 + 25, y: playerRef.current.position.y});
 
       frameCount++;
       requestAnimationFrame(update);
@@ -312,6 +321,9 @@ export const Game: React.FC<GameProps> = ({
       if (playerBox.x < keyBox.x + keyBox.w && playerBox.x + playerBox.w > keyBox.x &&
           playerBox.y < keyBox.y + keyBox.h && playerBox.y + playerBox.h > keyBox.y) {
         setLocalKeyCollected(true);
+        // Play key collection sound
+        keySound.current.currentTime = 0;
+        keySound.current.play().catch(e => console.log('Could not play key sound:', e));
         // DISABLED: No badge claiming
         // onKeyCollect();
       }
@@ -323,6 +335,9 @@ export const Game: React.FC<GameProps> = ({
        if (playerBox.x < doorBox.x + doorBox.w && playerBox.x + playerBox.w > doorBox.x &&
           playerBox.y < doorBox.y + doorBox.h && playerBox.y + playerBox.h > doorBox.y) {
         setLevelWin(true);
+        // Play door unlock sound
+        unlockSound.current.currentTime = 0;
+        unlockSound.current.play().catch(e => console.log('Could not play unlock sound:', e));
       }
     }
 
@@ -344,7 +359,7 @@ export const Game: React.FC<GameProps> = ({
   return (
     <div
       ref={gameAreaRef}
-      className="w-full lg:w-2/3 h-[768px] bg-sky-300 relative overflow-hidden rounded-lg border-4 border-brand-primary"
+      className="w-[800px] h-[700px] bg-sky-300 relative overflow-hidden rounded-lg border-4 border-brand-primary mx-auto"
     >
       {/* Timer Display */}
       <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg font-bold text-lg z-10">

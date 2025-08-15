@@ -6,7 +6,7 @@ export const HONEYCOMB_API_URL = "https://edge.test.honeycombprotocol.com/";
 export const ADMIN_ADDRESS = process.env.VITE_ADMIN_ADDRESS;
 
 // Season 1 Configuration
-export const SEASON_1_TIME_LIMIT = 220; // 30 seconds for all 5 levels
+export const SEASON_1_TIME_LIMIT = 60; // 60 seconds for all 5 levels
 export const SEASON_1_LEVELS = 5;
 
 // Level data for Season 1
@@ -135,27 +135,27 @@ export const SEASON_1_DATA = {
   //   clouds: { x: 0, y: 0, width: 768, height: 192 },
   // },
 
-  level5: {
-    player: { x: 512, y: 576 },
-    blocks: [
-      { x: 0, y: 640, width: 770, height: 128 },
-      { x: 384, y: 192, width: 448, height: 64 },
-      { x: 640, y: 384, width: 192, height: 256 },
-      { x: 0, y: 0, width: 768, height: 64 },
-      { x: 704, y: 64, width: 64, height: 192 },
-      { x: -64, y: 384, width: 448, height: 64 },
-      { x: -64, y: 448, width: 128, height: 192 },
-      { x: -64, y: 64, width: 128, height: 192 },
-      { x: 256, y: 192, width: 128, height: 356 },
-    ],
-    key: { x: 615, y: 118, width: 32, height: 32 },
-    door: { x: 128, y: 546, width: 98, height: 94 },
-    spikes: [
-      { x: 445, y: 235, width: 40, height: 40 },
-      { x: 400, y: 235, width: 40, height: 40 },
-    ],
-    clouds: { x: 0, y: 0, width: 768, height: 192 },
-  },
+  level5:  {
+  player: { x: 150, y: 250 },
+  blocks: [
+    { x: 0, y: 640, width: 768, height: 128 },
+    { x: 0, y: 0, width: 768, height: 64 },
+    { x: 0, y: 64, width: 64, height: 256 },
+    { x: 704, y: 64, width: 64, height: 576 },
+    { x: 0, y: 320, width: 64, height: 320 },
+    { x: 66, y: 320, width: 234, height: 64 },
+    { x: 490, y: 192, width: 292, height: 64 },
+    { x: 490, y: 251, width: 64, height: 290 },
+  ],
+  key: { x: 600, y: 100, width: 32, height: 32 },
+  door: { x: 610, y: 550, width: 98, height: 94 },
+  spikes: [
+    { x: 663, y: 153, width: 40, height: 40 },
+    { x: 260, y: 280, width: 40, height: 40 },
+    { x: 290, y: 600, width: 40, height: 40 },
+  ],
+  clouds: { x: 0, y: 0, width: 768, height: 192 },
+},
 
 };
 

@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "create-project": "node createProject.ts",
-    "create-profiles": "node createProfilesTree.mjs",
-    "create-profiles-alt": "node createProfilesTreeAlt.mjs",
-    "create-profiles-cjs": "node createProfilesTree.cjs"
+    "setup": "node --loader ts-node/esm setup.ts",
+    "create-project": "node --loader ts-node/esm createProject.ts",
+    "create-users": "node --loader ts-node/esm createUsers.ts",
+    "create-profiles": "node --loader ts-node/esm createProfiles.ts",
+    "create-resources": "node --loader ts-node/esm createResources.ts",
+    "create-game-resources": "node --loader ts-node/esm createGameResources.ts",
+    "create-badge-system": "node --loader ts-node/esm createBadgeSystem.ts",
+    "authenticate": "node --loader ts-node/esm authenticate.ts"
   },
   "dependencies": {
     "@honeycomb-protocol/edge-client": "^0.0.7-beta.14",
-    "@solana/web3.js": "^1.87.6"
+    "@solana/web3.js": "^1.87.6",
+    "tweetnacl": "^1.0.3",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }

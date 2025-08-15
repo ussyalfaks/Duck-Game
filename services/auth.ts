@@ -8,7 +8,7 @@ export interface AuthResult {
 }
 
 export const authenticateUser = async (wallet: WalletContextState): Promise<AuthResult | null> => {
-  if (!wallet.publicKey || !wallet.signMessage) {
+  if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
     throw new Error("Wallet not connected or does not support message signing");
   }
 

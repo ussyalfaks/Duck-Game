@@ -1,0 +1,219 @@
+{
+  "projectId": "Hq63HojpwE3pK91i5kU2B7a4a3xfLrcGwTqDc8H1ftR",
+  "authority": "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+  "createdAt": "2025-08-15T13:20:28.980Z",
+  "transactionSignature": "5mFRwAyYysy81GRZDniTeKhnEG1Uj1WuNWF9aGY7Q2tTburGjmKhQ3v3oitgLUTyLY5vdCM5CQbTUtLf6AYgNYNS",
+  "apiUrl": "https://edge.test.honeycombprotocol.com/",
+  "name": "Duck Game Project",
+  "testUser": {
+    "wallet": "FS3PHu3MrT2MnuFehJWvxGsPibngV4m1u9beTqkyMA1G",
+    "name": "Test Player",
+    "createdAt": "2025-08-15T13:20:35.843Z",
+    "transactionSignature": "5saXgt32YL6Cz97f8j5ovSEscZ4wF9Pe9d9o7FodaRKEwyeAMx6denG5QLRNidhs5Rv9nUEMY58cWiYFtSvmfLpb"
+  },
+  "profiles": {
+    "name": "Duck Game Profiles",
+    "authority": "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+    "createdAt": "2025-08-15T13:43:04.576Z",
+    "description": "Player profiles for Duck Game",
+    "treeCreated": true,
+    "treeAddress": "BVgVDxMaYjc7i4kTtgh9yVBF3fCbbj7XG8J4nqPbhs51",
+    "maxCapacity": 131072,
+    "transactionSignature": "9DB7U5cP8mb4HfnTQe18SYDgj1WSZmBMnC9ZKRtV7JJEVxEcRyRAjEh9nEq6eeAmxRgYZT2UdV7UYqYeGUiXGRZ"
+  },
+  "resources": {
+    "gameResources": [
+      {
+        "name": "Experience Points (XP)",
+        "symbol": "XP",
+        "type": "currency",
+        "description": "Points earned through gameplay",
+        "decimals": 0,
+        "uri": "https://example.com/xp-metadata.json"
+      },
+      {
+        "name": "Achievement Badges",
+        "symbol": "BADGE",
+        "type": "collectible",
+        "description": "Special achievement badges for milestones",
+        "decimals": 0,
+        "uri": "https://example.com/badge-metadata.json"
+      }
+    ],
+    "achievementSystem": {
+      "levels": [
+        {
+          "level": 1,
+          "xpRequired": 0,
+          "title": "Duckling"
+        },
+        {
+          "level": 2,
+          "xpRequired": 100,
+          "title": "Young Duck"
+        },
+        {
+          "level": 3,
+          "xpRequired": 250,
+          "title": "Duck"
+        },
+        {
+          "level": 4,
+          "xpRequired": 500,
+          "title": "Expert Duck"
+        },
+        {
+          "level": 5,
+          "xpRequired": 1000,
+          "title": "Duck Master"
+        },
+        {
+          "level": 6,
+          "xpRequired": 2000,
+          "title": "Duck Legend"
+        }
+      ],
+      "badges": [
+        {
+          "id": "first_game",
+          "name": "First Flight",
+          "description": "Play your first game"
+        },
+        {
+          "id": "win_streak",
+          "name": "Hot Streak",
+          "description": "Win 5 games in a row"
+        },
+        {
+          "id": "high_score",
+          "name": "High Flyer",
+          "description": "Achieve a high score"
+        },
+        {
+          "id": "daily_player",
+          "name": "Daily Duck",
+          "description": "Play every day for a week"
+        },
+        {
+          "id": "tournament_winner",
+          "name": "Tournament Champion",
+          "description": "Win a tournament"
+        }
+      ]
+    },
+    "authority": "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+    "createdAt": "2025-08-15T13:20:38.281Z"
+  },
+  "gameResources": {
+    "resources": [
+      {
+        "name": "Experience Points",
+        "symbol": "XP",
+        "address": "7HJjE8TvvvRjPqb4TvaaRZWmxvgfeW6bedEc8iLzQF6d",
+        "decimals": 0,
+        "storage": "LedgerState",
+        "transactionSignature": "wVf1q63LBBEPY31EefU7ZV2ReBs7nv9Az5Nj2tKo7xjQ6CXqYTTXwuoZaRrQps3xW2vCK1GZAZNpMpN6b6q9JwE",
+        "createdAt": "2025-08-15T15:32:04.573Z"
+      },
+      {
+        "name": "Achievement Badges",
+        "symbol": "BADGE",
+        "address": "5AfG7DK7yQAWszqK9kiRJkSbWBzRt8XPUyGuDsHtSu4K",
+        "decimals": 0,
+        "storage": "LedgerState",
+        "transactionSignature": "56XdPa4FMCquUqchwzEM6XeNa2mvHS18H1wHU1R2KHARzVCxNJMHGDjYaL8ibd5FAAzK4A9WzALKkzTgKBTHjizG",
+        "createdAt": "2025-08-15T15:32:22.683Z"
+      }
+    ],
+    "projectId": "Hq63HojpwE3pK91i5kU2B7a4a3xfLrcGwTqDc8H1ftR",
+    "authority": "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+    "createdAt": "2025-08-15T15:32:24.685Z"
+  },
+  "badgeSystem": {
+    "badges": [
+      {
+        "index": 0,
+        "name": "First Flight",
+        "description": "Play your first game",
+        "condition": "Public",
+        "metadata": {
+          "id": "first_game",
+          "rarity": "common",
+          "reward": {
+            "xp": 25
+          }
+        },
+        "error": "[GraphQL] TypeError: Cannot read properties of null (reading 'some')",
+        "createdAt": "2025-08-15T15:38:14.978Z",
+        "success": false
+      },
+      {
+        "index": 1,
+        "name": "Hot Streak",
+        "description": "Win 5 games in a row",
+        "condition": "Public",
+        "metadata": {
+          "id": "win_streak",
+          "rarity": "rare",
+          "reward": {
+            "xp": 75
+          }
+        },
+        "error": "[GraphQL] TypeError: Cannot read properties of null (reading 'some')",
+        "createdAt": "2025-08-15T15:38:16.049Z",
+        "success": false
+      },
+      {
+        "index": 2,
+        "name": "High Flyer",
+        "description": "Achieve a high score of 10,000+",
+        "condition": "Public",
+        "metadata": {
+          "id": "high_score",
+          "rarity": "epic",
+          "reward": {
+            "xp": 100
+          }
+        },
+        "error": "[GraphQL] TypeError: Cannot read properties of null (reading 'some')",
+        "createdAt": "2025-08-15T15:38:16.720Z",
+        "success": false
+      },
+      {
+        "index": 3,
+        "name": "Daily Duck",
+        "description": "Play every day for a week",
+        "condition": "Public",
+        "metadata": {
+          "id": "daily_player",
+          "rarity": "rare",
+          "reward": {
+            "xp": 150
+          }
+        },
+        "error": "[GraphQL] TypeError: Cannot read properties of null (reading 'some')",
+        "createdAt": "2025-08-15T15:38:17.041Z",
+        "success": false
+      },
+      {
+        "index": 4,
+        "name": "Tournament Champion",
+        "description": "Win a tournament",
+        "condition": "Public",
+        "metadata": {
+          "id": "tournament_winner",
+          "rarity": "legendary",
+          "reward": {
+            "xp": 250
+          }
+        },
+        "error": "[GraphQL] TypeError: Cannot read properties of null (reading 'some')",
+        "createdAt": "2025-08-15T15:38:17.362Z",
+        "success": false
+      }
+    ],
+    "projectId": "Hq63HojpwE3pK91i5kU2B7a4a3xfLrcGwTqDc8H1ftR",
+    "authority": "E45Jqz7F9bFdfyxHuWnqgczVtQ8a8NWvDtAGk5p9G83q",
+    "createdAt": "2025-08-15T15:38:17.362Z"
+  }
+}

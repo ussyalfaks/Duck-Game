@@ -6,6 +6,9 @@ import { honeycombClient } from '../services/honeycomb';
 import { Game } from './Game';
 import { ProfileUpdate } from './ProfileUpdate';
 import { HowToPlay } from './HowToPlay';
+import { Dashboard } from './Dashboard';
+import { useGameResources } from '../hooks/useGameResources';
+import { gameFlow } from '../services/gameFlow';
 import { KEY_BADGE_INDEX, ADMIN_ADDRESS } from '../constants';
 
 // Helper to map SDK Profile to our App's HCB_Profile type
@@ -24,7 +27,8 @@ const mapSDKProfileToAppProfile = (sdkProfile: any) => {
 };
 
 export const GameView: React.FC = () => {
-  const { connected, publicKey } = useWallet();
+  const wallet = useWallet();
+  const { connected, publicKey } = wallet;
   const {
     project,
     profile,
@@ -43,6 +47,16 @@ export const GameView: React.FC = () => {
   const [seasonComplete, setSeasonComplete] = useState(false);
   const [showProfileUpdate, setShowProfileUpdate] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameRewards, setGameRewards] = useState<any>(null);
+  
+  // Use the game resources hook for blockchain integration
+  const {
+    playerBadges,
+    badgeProgress,
+    playerStats,
+    updatePlayerStats,
+    refresh: refreshResources
+  } = useGameResources();
 
   // Check if current wallet is the admin address
   const isAdmin = publicKey && publicKey.toBase58() === ADMIN_ADDRESS;
@@ -76,9 +90,48 @@ export const GameView: React.FC = () => {
     setHasKey(true);
   };
 
-  const handleSeasonComplete = () => {
-    console.log('Season 1 completed!');
+  const handleSeasonComplete = async (finalScore: number) => {
+    console.log('Season 1 completed!', { finalScore });
     setSeasonComplete(true);
+    
+    // Process game completion with real blockchain rewards
+    if (profile && publicKey) {
+      try {
+        const gameSession = {
+          sessionId: `season1-${Date.now()}`,
+          startTime: new Date(Date.now() - 30000), // 30 seconds ago
+          endTime: new Date(),
+          level: 5, // Completed all 5 levels
+          score: finalScore,
+          completed: true,
+          perfectScore: finalScore >= 15000,
+          noDamage: false, // Assume some damage taken
+          speedBonus: true, // Completed within time limit
+          collectiblesFound: 5, // One key per level
+          enemiesDefeated: 0, // No enemies in this game
+          timePlayed: 30 // 30 seconds total
+        };
+
+        console.log('Processing season completion with gameFlow...');
+        const result = await gameFlow.handleLevelComplete(
+          wallet,
+          profile.address,
+          gameSession,
+          playerStats
+        );
+
+        if (result.success) {
+          console.log('🎉 Season completion rewards:', result.rewards);
+          setGameRewards(result.rewards);
+          updatePlayerStats(result.newPlayerStats);
+          refreshResources();
+        } else {
+          console.error('❌ Failed to process season completion:', result.error);
+        }
+      } catch (error) {
+        console.error('Error processing season completion:', error);
+      }
+    }
   };
 
   const hasOnChainKey = profile?.badges?.includes(KEY_BADGE_INDEX) || false;
@@ -163,7 +216,16 @@ export const GameView: React.FC = () => {
             onPlayerDeath={resetGame}
             onSeasonComplete={handleSeasonComplete}
           />
-          <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
+          <Dashboard 
+            isLoading={isLoading}
+            error={error}
+            txSignature={txSignature}
+            message="Playing Season 1"
+            profile={profile}
+            onProfileUpdated={updateProfile}
+            showResourceDetails={true}
+          />
+          <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between hidden">
             <div>
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-2xl font-bold text-brand-secondary">Season 1</h2>
@@ -285,6 +347,73 @@ export const GameView: React.FC = () => {
         </div>
         </div>
 
+        {/* Game Completion Rewards Modal */}
+        {gameRewards && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+              <h2 className="text-2xl font-bold mb-4 text-center">🎉 Season Complete!</h2>
+              
+              <div className="space-y-3 mb-6">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🏆</div>
+                  <p className="text-lg font-bold">Congratulations!</p>
+                  <p className="text-sm text-gray-600">You've completed Season 1!</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <h3 className="font-bold">Rewards Earned:</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>XP:</span>
+                      <span className="font-bold text-blue-600">+{gameRewards.xpAwarded}</span>
+                    </div>
+                    {gameRewards.duckCoinsAwarded > 0 && (
+                      <div className="flex justify-between">
+                        <span>Duck Coins:</span>
+                        <span className="font-bold text-yellow-600">+{gameRewards.duckCoinsAwarded}</span>
+                      </div>
+                    )}
+                    {gameRewards.powerUpsAwarded > 0 && (
+                      <div className="flex justify-between">
+                        <span>Power-ups:</span>
+                        <span className="font-bold text-purple-600">+{gameRewards.powerUpsAwarded}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {gameRewards.levelUpReward && (
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-lg text-center">
+                      <p className="font-bold">LEVEL UP!</p>
+                      <p>Level {gameRewards.levelUpReward.level} - {gameRewards.levelUpReward.title}</p>
+                    </div>
+                  )}
+                  
+                  {gameRewards.badgesEarned?.length > 0 && (
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <p className="font-bold text-orange-800 mb-2">New Badges Earned!</p>
+                      {gameRewards.badgesEarned.map((badge: any) => (
+                        <p key={badge.badgeId} className="text-sm text-orange-700">
+                          🏅 {badge.name}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  setGameRewards(null);
+                  refreshResources(); // Refresh the dashboard
+                }}
+                className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-bold"
+              >
+                Awesome! Continue
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Profile Update Modal */}
         {showProfileUpdate && profile && (
           <ProfileUpdate
@@ -338,7 +467,7 @@ export const GameView: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xl text-brand-text-muted mb-6">
+        <p className="text-2xl text-white text-brand-text-muted mb-6">
           Connect your wallet to start your adventure. Navigate through 5 challenging levels, 
           collect keys, avoid spikes, and complete the season before time runs out!
         </p>
@@ -496,7 +625,8 @@ export const GameView: React.FC = () => {
   if (profile && !gameStarted) {
     return (
       <>
-        <div className="text-center max-w-2xl mx-auto">
+        <div className="flex flex-row gap-8 w-full justify-center items-center">
+          <div className="flex-1 text-center max-w-2xl mx-auto lg:mx-0">
         {/* Header with wallet status */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-brand-secondary">Ready for Season 1?</h1>
@@ -534,9 +664,47 @@ export const GameView: React.FC = () => {
                 </button>
               </div>
               <p className="text-sm text-brand-text-muted text-center">XP: {profile.xp}</p>
+              
+              {/* Badge tracking display */}
+              <div className="mt-2 text-center">
+                <p className="text-sm text-brand-text-muted">Badges: {playerBadges.length}</p>
+                {badgeProgress.length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    {badgeProgress.slice(0, 2).map((badge, index) => (
+                      <div key={badge.badgeId} className="text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-brand-text-muted">{badge.name}</span>
+                          <span className={badge.isEarned ? 'text-green-600' : 'text-orange-600'}>
+                            {badge.isEarned ? '✓' : `${Math.round(badge.progressPercentage)}%`}
+                          </span>
+                        </div>
+                        {!badge.isEarned && (
+                          <div className="bg-gray-200 rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-orange-500 h-1 rounded-full transition-all duration-300"
+                              style={{ width: `${badge.progressPercentage}%` }}
+                            ></div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               {profile.bio && <p className="text-sm text-brand-text-muted text-center mt-1">{profile.bio}</p>}
             </div>
           </div>
+        </div>
+
+        {/* How to Play Button */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowHowToPlay(true)}
+            className="bg-brand-primary text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-90 transition-colors font-['Blockblueprint'] border-2 border-brand-secondary"
+          >
+            📖 How to Play
+          </button>
         </div>
 
         <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg mb-6">
@@ -562,6 +730,16 @@ export const GameView: React.FC = () => {
           🎮 Start Season 1
         </button>
         </div>
+        
+        {/* Dashboard on the right */}
+        <Dashboard 
+          isLoading={isLoading}
+          error={error}
+          txSignature={txSignature}
+          profile={profile}
+          onProfileUpdated={updateProfile}
+        />
+        </div>
 
         {/* Profile Update Modal */}
         {showProfileUpdate && profile && (
@@ -574,6 +752,12 @@ export const GameView: React.FC = () => {
             onClose={() => setShowProfileUpdate(false)}
           />
         )}
+
+        {/* How to Play Modal */}
+        <HowToPlay
+          isOpen={showHowToPlay}
+          onClose={() => setShowHowToPlay(false)}
+        />
       </>
     );
   }

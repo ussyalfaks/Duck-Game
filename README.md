@@ -502,7 +502,7 @@ This project demonstrates the potential of on-chain gaming with Honeycomb Protoc
 3. **Implement your changes**
 4. **Test with Honeycomb integration**
 5. **Submit a pull request**
-
+video link : https://youtu.be/XHYiJ6LCvgM
 ## 📄 License
 
 MIT License - see LICENSE file for details.

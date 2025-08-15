@@ -1,4 +1,4 @@
-# <� Duck Adventure Game - Honeycomb Protocol Integration
+# 🦆 Duck Adventure Game - Honeycomb Protocol Integration
 
 A demonstration game showcasing **Honeycomb Protocol** as the core game mechanic for on-chain progression, player identity, and mission logic. This 2D platformer challenges players to complete Season 1 across 5 levels while their achievements, progress, and identity live permanently on the blockchain.
 
@@ -37,18 +37,18 @@ The `/server` directory contains **one-time setup scripts** that:
 
 **No Traditional Backend** = True decentralization, permanent data, and player ownership.
 
-## <� Game Overview
+## 🎮 Game Overview
 
 **Duck Adventure** is a time-based platformer where players navigate through challenging levels, collect keys, avoid spikes, and race against the clock. What makes this game special is that **every aspect of player progression is powered by Honeycomb Protocol** - making achievements verifiable, permanent, and portable across any dApp.
 
 ### Key Features
-- **= On-Chain Player Identity**: Profiles stored permanently on Solana via Honeycomb
-- **� Real-Time Progression**: XP, levels, and achievements tracked on blockchain
-- **<� Verifiable Badges**: Achievement badges minted as blockchain assets
-- **<� Mission-Based Rewards**: Honeycomb missions power the entire reward system
-- **=� Permanent Records**: All game data persists across sessions and platforms
+- **👤 On-Chain Player Identity**: Profiles stored permanently on Solana via Honeycomb
+- **📈 Real-Time Progression**: XP, levels, and achievements tracked on blockchain
+- **🏆 Verifiable Badges**: Achievement badges minted as blockchain assets
+- **🎯 Mission-Based Rewards**: Honeycomb missions power the entire reward system
+- **💎 Permanent Records**: All game data persists across sessions and platforms
 
-## >� How Honeycomb Powers the Game
+## ⚙️ How Honeycomb Powers the Game
 
 ### 1. **Player Identity & Profiles**
 
@@ -190,7 +190,7 @@ Player levels and titles are calculated from on-chain XP, creating a **verifiabl
 - **Level 5**: Duck Master (1000 XP)
 - **Level 6**: Duck Legend (2000 XP)
 
-## <� Game Mechanics Powered by Honeycomb
+## 🎯 Game Mechanics Powered by Honeycomb
 
 ### **Time-Based Missions**
 - Players have 30 seconds to complete all 5 levels
@@ -215,7 +215,7 @@ Player levels and titles are calculated from on-chain XP, creating a **verifiabl
 - **Enemy Defeated**: +10 XP each
 - **Collectible Found**: +5 XP each
 
-## =� Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -278,7 +278,7 @@ npm run dev
 4. **Earn Rewards**: XP and badges minted to your profile
 5. **Track Progress**: View your permanent blockchain achievements
 
-## =� Technical Architecture
+## 🔧 Technical Architecture
 
 ### Core Dependencies
 ```json
@@ -303,26 +303,26 @@ npm run dev
 ### Project Structure
 ```
 honeycomb-duck-game/
-   hooks/                    # React hooks for Honeycomb integration
-      useHoneycomb.ts      # Main Honeycomb Protocol hook
-      useGameResources.ts  # Resource management hook
-   services/                # Business logic services
-      honeycomb.ts        # Honeycomb client configuration
-      resourceManager.ts  # XP and resource management
-      achievementSystem.ts # Level and progression logic
-      badgeSystem.ts      # Badge criteria and awarding
-      gameFlow.ts         # Mission completion flow
-   components/              # React components
-      Game.tsx            # Core game engine with Matter.js
-      Dashboard.tsx       # Player stats and controls
-      GameView.tsx        # Main game orchestration
-   server/                 # Honeycomb setup scripts
-       setup.ts            # Project initialization
-       createBadgeSystem.ts # Badge criteria setup
-       createGameResources.ts # Resource configuration
+├── hooks/                    # React hooks for Honeycomb integration
+│   ├── useHoneycomb.ts      # Main Honeycomb Protocol hook
+│   └── useGameResources.ts  # Resource management hook
+├── services/                # Business logic services
+│   ├── honeycomb.ts        # Honeycomb client configuration
+│   ├── resourceManager.ts  # XP and resource management
+│   ├── achievementSystem.ts # Level and progression logic
+│   ├── badgeSystem.ts      # Badge criteria and awarding
+│   └── gameFlow.ts         # Mission completion flow
+├── components/              # React components
+│   ├── Game.tsx            # Core game engine with Matter.js
+│   ├── Dashboard.tsx       # Player stats and controls
+│   └── GameView.tsx        # Main game orchestration
+└── server/                 # Honeycomb setup scripts
+    ├── setup.ts            # Project initialization
+    ├── createBadgeSystem.ts # Badge criteria setup
+    └── createGameResources.ts # Resource configuration
 ```
 
-## =� Honeycomb Integration Benefits
+## 🌟 Honeycomb Integration Benefits
 
 ### **For Players**
 - **True Ownership**: Your profile and achievements are blockchain assets you own
@@ -341,7 +341,7 @@ honeycomb-duck-game/
 - **Composable Achievements**: Badges and XP can be used by other applications
 - **Network Effects**: Larger player network benefits all integrated games
 
-## <� Using Honeycomb for Your Game
+## 🛠️ Using Honeycomb for Your Game
 
 ### 1. **Project Setup**
 
@@ -413,7 +413,7 @@ async handleGameComplete(wallet, profileAddress, gameSession, playerStats) {
 }
 ```
 
-## =' Advanced Honeycomb Features
+## 🔥 Advanced Honeycomb Features
 
 ### **Trait Assignment**
 ```typescript
@@ -447,7 +447,7 @@ await honeycombClient.recordContribution({
 });
 ```
 
-## =� Verxio Integration (Optional)
+## 🤝 Verxio Integration (Optional)
 
 This game also integrates with [Verxio Protocol](https://docs.verxio.xyz/) for enhanced loyalty mechanics:
 
@@ -463,7 +463,7 @@ const loyaltyProgram = await verxio.createLoyaltyProgram({
 await verxio.awardPoints(profileAddress, gameScore);
 ```
 
-## < What Makes This Special
+## ✨ What Makes This Special
 
 Unlike traditional games where progression is stored in private databases, **Duck Adventure** demonstrates how Honeycomb Protocol enables:
 
@@ -473,7 +473,7 @@ Unlike traditional games where progression is stored in private databases, **Duc
 4. **Permanent Records**: Your gaming history is preserved forever on Solana
 5. **Composable Identity**: Other games and dApps can build on your achievement history
 
-## <� Technical Innovation
+## 🚀 Technical Innovation
 
 This game showcases several innovative uses of Honeycomb:
 
@@ -483,7 +483,7 @@ This game showcases several innovative uses of Honeycomb:
 - **Progressive Unlocks**: Content unlocked based on verifiable on-chain criteria
 - **Cross-Session Persistence**: All progress maintained across wallet disconnections
 
-## =� Future Possibilities
+## 🔮 Future Possibilities
 
 With Honeycomb as the foundation, this game could expand to include:
 
@@ -493,7 +493,7 @@ With Honeycomb as the foundation, this game could expand to include:
 - **Community Contributions**: Player-created levels with on-chain attribution
 - **Economic Systems**: Trade resources and achievements with other players
 
-## =� Contributing
+## 🤝 Contributing
 
 This project demonstrates the potential of on-chain gaming with Honeycomb Protocol. Contributions welcome:
 
@@ -503,12 +503,12 @@ This project demonstrates the potential of on-chain gaming with Honeycomb Protoc
 4. **Test with Honeycomb integration**
 5. **Submit a pull request**
 
-## =� License
+## 📄 License
 
 MIT License - see LICENSE file for details.
 
 ---
 
-**Built with =� for the Honeycomb Protocol Game Jam**
+**Built with 🦆 for the Honeycomb Protocol Game Jam**
 
 *This game demonstrates how Honeycomb Protocol can power the next generation of on-chain gaming experiences where player identity, progression, and achievements are verifiable, permanent, and truly owned by the players.*

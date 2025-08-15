@@ -718,6 +718,10 @@ export const useHoneycomb = () => {
     }
   }, [profile, canPlay]);
 
+  const updateProfile = (updatedProfile: HCB_Profile) => {
+    setProfile(updatedProfile);
+  };
+
   return {
     project,
     profile,
@@ -732,5 +736,6 @@ export const useHoneycomb = () => {
     createProfile,
     claimKeyBadge,
     setProfile, // Export setProfile for manual profile loading
+    updateProfile, // Export updateProfile for profile updates
   };
 };

@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useHoneycomb } from '../hooks/useHoneycomb';
 import { honeycombClient } from '../services/honeycomb';
-import { Dashboard } from './Dashboard';
 import { Game } from './Game';
+import { ProfileUpdate } from './ProfileUpdate';
+import { HowToPlay } from './HowToPlay';
 import { KEY_BADGE_INDEX, ADMIN_ADDRESS } from '../constants';
 
 // Helper to map SDK Profile to our App's HCB_Profile type
@@ -30,17 +31,18 @@ export const GameView: React.FC = () => {
     isLoading,
     error,
     txSignature,
-    createBadge,
     createProfile,
-    claimKeyBadge,
     canPlay,
     setProfile,
+    updateProfile,
   } = useHoneycomb();
 
   const [hasKey, setHasKey] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [seasonComplete, setSeasonComplete] = useState(false);
+  const [showProfileUpdate, setShowProfileUpdate] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   // Check if current wallet is the admin address
   const isAdmin = publicKey && publicKey.toBase58() === ADMIN_ADDRESS;
@@ -109,7 +111,6 @@ export const GameView: React.FC = () => {
   const handleReloadProfile = async () => {
     if (!publicKey || !project) return;
     
-    setIsLoading(true);
     try {
       console.log('Manual profile reload requested');
       const { profile: profiles } = await honeycombClient.findProfiles({
@@ -121,8 +122,7 @@ export const GameView: React.FC = () => {
         const mappedProfile = mapSDKProfileToAppProfile(profiles[0]);
         console.log('Profile found on manual reload:', mappedProfile);
         setProfile(mappedProfile);
-        setCanPlay(true);
-        // Don't reload the page anymore - let the hearts system handle game state
+        // Profile reloaded successfully
       } else {
         // Try finding by user
         const { user: users } = await honeycombClient.findUsers({
@@ -135,18 +135,14 @@ export const GameView: React.FC = () => {
             const mappedProfile = mapSDKProfileToAppProfile(projectProfile);
             console.log('Profile found via user search:', mappedProfile);
             setProfile(mappedProfile);
-            setCanPlay(true);
             return;
           }
         }
         
-        setError('Profile still not found. It may take a few moments to appear on-chain.');
+        console.error('Profile still not found. It may take a few moments to appear on-chain.');
       }
     } catch (e) {
       console.error('Manual profile reload failed:', e);
-      setError('Failed to reload profile');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -159,51 +155,64 @@ export const GameView: React.FC = () => {
     });
     
     return (
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
-        <Game
-          onKeyCollect={handleKeyCollect}
-          isKeyCollected={hasKey || hasOnChainKey}
-          onPlayerDeath={resetGame}
-          onSeasonComplete={handleSeasonComplete}
-        />
-        <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-brand-secondary">Season 1</h2>
-              <button
-                onClick={handleBackToHome}
-                className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
-              >
-                Back to Home
-              </button>
-            </div>
-            <p className="text-brand-text-muted mb-6">
-              Complete all 5 levels in 30 seconds! Use WASD or Arrow Keys to move and jump. 
-              Collect the key to unlock the door in each level! You have 3 hearts per season.
-            </p>
-            
-            {profile && (
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <img src={profile.pfp} alt="Player PFP" className="w-16 h-16 rounded-full bg-brand-primary" />
-                  <div>
-                    <h3 className="text-xl font-bold">{profile.name}</h3>
-                    <p className="text-sm text-brand-text-muted font-mono break-all">{profile.address}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p><strong>XP:</strong> {profile.xp}</p>
-                  <div>
-                    <strong>Status:</strong>
-                    {seasonComplete ? (
-                      <span className="ml-2 inline-block bg-green-500 text-white px-2 py-1 text-xs font-bold rounded">Season 1 Complete!</span>
-                    ) : (
-                      <span className="ml-2 inline-block bg-blue-500 text-white px-2 py-1 text-xs font-bold rounded">In Progress</span>
-                    )}
-                  </div>
-                </div>
+      <>
+        <div className="flex flex-col lg:flex-row gap-8 w-full">
+          <Game
+            onKeyCollect={handleKeyCollect}
+            isKeyCollected={hasKey || hasOnChainKey}
+            onPlayerDeath={resetGame}
+            onSeasonComplete={handleSeasonComplete}
+          />
+          <div className="w-full lg:w-1/3 bg-brand-surface p-6 rounded-lg shadow-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-brand-secondary">Season 1</h2>
+                <button
+                  onClick={handleBackToHome}
+                  className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
+                >
+                  Back to Home
+                </button>
               </div>
-            )}
+              <p className="text-brand-text-muted mb-6">
+                Complete all 5 levels in 30 seconds! Use WASD or Arrow Keys to move and jump. 
+                Collect the key to unlock the door in each level! You have 3 hearts per season.
+              </p>
+              
+              {profile && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <img src={profile.pfp} alt="Player PFP" className="w-16 h-16 rounded-full bg-brand-primary" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold">{profile.name}</h3>
+                        <button
+                          onClick={() => setShowProfileUpdate(true)}
+                          className="text-brand-text-muted hover:text-brand-secondary transition-colors"
+                          title="Edit Profile"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <p className="text-sm text-brand-text-muted font-mono break-all">{profile.address}</p>
+                      {profile.bio && <p className="text-sm text-brand-text-muted mt-1">{profile.bio}</p>}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p><strong>XP:</strong> {profile.xp}</p>
+                    <div>
+                      <strong>Status:</strong>
+                      {seasonComplete ? (
+                        <span className="ml-2 inline-block bg-green-500 text-white px-2 py-1 text-xs font-bold rounded">Season 1 Complete!</span>
+                      ) : (
+                        <span className="ml-2 inline-block bg-blue-500 text-white px-2 py-1 text-xs font-bold rounded">In Progress</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
             {/* Game Instructions */}
             <div className="bg-brand-primary bg-opacity-10 p-4 rounded-lg mb-6">
@@ -274,7 +283,20 @@ export const GameView: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+        </div>
+
+        {/* Profile Update Modal */}
+        {showProfileUpdate && profile && (
+          <ProfileUpdate
+            profile={profile}
+            onProfileUpdated={(updatedProfile) => {
+              updateProfile(updatedProfile);
+              setShowProfileUpdate(false);
+            }}
+            onClose={() => setShowProfileUpdate(false)}
+          />
+        )}
+      </>
     );
   }
 
@@ -296,7 +318,7 @@ export const GameView: React.FC = () => {
       <div className="text-center max-w-4xl mx-auto">
         {/* Header with wallet connection */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-brand-secondary">Welcome to Season 1!</h1>
+          <h1 className="text-4xl font-bold text-brand-secondary font-['Blockblueprint']">Welcome to Season 1!</h1>
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-brand-text-muted mb-1">
@@ -316,20 +338,30 @@ export const GameView: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xl text-brand-text-muted mb-8">
+        <p className="text-xl text-brand-text-muted mb-6">
           Connect your wallet to start your adventure. Navigate through 5 challenging levels, 
           collect keys, avoid spikes, and complete the season before time runs out!
         </p>
 
+        {/* How to Play Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowHowToPlay(true)}
+            className="bg-brand-primary text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-90 transition-colors font-['Blockblueprint'] border-2 border-brand-secondary"
+          >
+            📖 How to Play
+          </button>
+        </div>
+
         <div className="bg-brand-surface p-6 rounded-lg shadow-lg mb-6">
-          <h3 className="text-xl font-bold mb-4">Game Features:</h3>
+          <h3 className="text-xl font-bold mb-4 font-['Blockblueprint']">Game Features:</h3>
           <div className="grid md:grid-cols-2 gap-4 text-left">
             <div>
-              <h4 className="font-semibold text-brand-secondary">🎮 Platformer Action</h4>
+              <h4 className="font-semibold text-brand-secondary font-['Blockblueprint']">🎮 Platformer Action</h4>
               <p className="text-sm text-brand-text-muted">Jump, run, and navigate through challenging levels</p>
             </div>
             <div>
-              <h4 className="font-semibold text-brand-secondary">⏱️ Time Challenge</h4>
+              <h4 className="font-semibold text-brand-secondary font-['Blockblueprint']">⏱️ Time Challenge</h4>
               <p className="text-sm text-brand-text-muted">Complete all levels within the time limit</p>
             </div>
             <div>
@@ -377,6 +409,12 @@ export const GameView: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* How to Play Modal */}
+        <HowToPlay
+          isOpen={showHowToPlay}
+          onClose={() => setShowHowToPlay(false)}
+        />
       </div>
     );
   }
@@ -457,7 +495,8 @@ export const GameView: React.FC = () => {
   // Profile exists but game not started
   if (profile && !gameStarted) {
     return (
-      <div className="text-center max-w-2xl mx-auto">
+      <>
+        <div className="text-center max-w-2xl mx-auto">
         {/* Header with wallet status */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-brand-secondary">Ready for Season 1?</h1>
@@ -481,9 +520,21 @@ export const GameView: React.FC = () => {
         <div className="bg-brand-surface p-6 rounded-lg shadow-lg mb-6">
           <div className="flex items-center justify-center gap-4 mb-4">
             <img src={profile.pfp} alt="Player PFP" className="w-16 h-16 rounded-full bg-brand-primary" />
-            <div>
-              <h3 className="text-xl font-bold">{profile.name}</h3>
-              <p className="text-sm text-brand-text-muted">XP: {profile.xp}</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 justify-center">
+                <h3 className="text-xl font-bold">{profile.name}</h3>
+                <button
+                  onClick={() => setShowProfileUpdate(true)}
+                  className="text-brand-text-muted hover:text-brand-secondary transition-colors"
+                  title="Edit Profile"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-brand-text-muted text-center">XP: {profile.xp}</p>
+              {profile.bio && <p className="text-sm text-brand-text-muted text-center mt-1">{profile.bio}</p>}
             </div>
           </div>
         </div>
@@ -510,7 +561,20 @@ export const GameView: React.FC = () => {
         >
           🎮 Start Season 1
         </button>
-      </div>
+        </div>
+
+        {/* Profile Update Modal */}
+        {showProfileUpdate && profile && (
+          <ProfileUpdate
+            profile={profile}
+            onProfileUpdated={(updatedProfile) => {
+              updateProfile(updatedProfile);
+              setShowProfileUpdate(false);
+            }}
+            onClose={() => setShowProfileUpdate(false)}
+          />
+        )}
+      </>
     );
   }
 

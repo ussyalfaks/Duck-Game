@@ -21,7 +21,7 @@ function App() {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-              <GameView />
+          <GameView />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

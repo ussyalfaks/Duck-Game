@@ -1,6 +1,25 @@
 
 @import "@solana/wallet-adapter-react-ui/styles.css";
 
-body {
-  font-family: 'Inter', sans-serif;
+@font-face {
+  font-family: 'Blockblueprint';
+  src: url('/font/Blockblueprint-LV7z5.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
+
+body {
+  font-family: 'Blockblueprint', 'Inter', sans-serif;
+
+    margin: 0;
+    height: 100vh;
+
+    background-color: orange;
+    background-image:
+      linear-gradient(45deg, #ff9900 25%, transparent 25%),
+      linear-gradient(-45deg, #ff9900 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #ff9900 75%),
+      linear-gradient(-45deg, #ffc886 75%, #ff9900 75%);
+    background-size: 50px 50px;
+    background-position: 0 0, 0 25px, 25px -25px, -25px 0px;
+  }
